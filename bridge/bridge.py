@@ -104,12 +104,13 @@ class Bridge(object):
         # 用不用LINKAI随时在变，取最新的情况，根据不同情况(要基本LLM还是高级LLM)而返回不同的bot
         bool_use_linkai = conf()["use_linkai"]
         if typename == "chat" :
-            if bool_use_linkai :
-                return self.bots[typename]["LinkAI"]
-            elif Bridge.class_bool_NowNeedAdvanLLM :
+            if Bridge.class_bool_NowNeedAdvanLLM :      #必须首先判 是否要高级LLM，否则一问2答 2次都会拿到LinkAI
                 return self.bots[typename]["AdvanLLM"]
             else :
-                return self.bots[typename]["BasicLLM"] 
+                if bool_use_linkai :
+                    return self.bots[typename]["LinkAI"]
+                else :
+                    return self.bots[typename]["BasicLLM"] 
         else :
             return self.bots[typename]
         #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
