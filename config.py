@@ -47,6 +47,11 @@ available_setting = {
     "azure_openai_dalle_deployment_id":"", # [可选] azure openai 用于回复图片的资源 deployment id，默认使用 text_to_image
     "image_proxy": True,  # 是否需要图片代理，国内访问LinkAI时需要
     "image_create_prefix": ["画", "看", "找"],  # 开启图片回复的前缀
+
+    "random_hintStr_array": ["小提示1", "小提示2", "小提示3"],  # 微信回复消息最后 添加的 随机小提示
+
+    "warning_reply_for_inappropriate_content": "请避免某些**词语，换一个词语或换一种说法，再问，再试\n\n（微信上发的消息与国产GPT产生的回复都受到严格监管）",
+
     "concurrency_in_session": 1,  # 同一会话最多有多少条消息在处理中，大于1可能乱序
     "image_create_size": "256x256",  # 图片大小,可选有 256x256, 512x512, 1024x1024 (dall-e-3默认为1024x1024)
     "group_chat_exit_group": False,

@@ -73,19 +73,24 @@ class Bridge(object):
             elif typename == "chat":
 
                 #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
-                # chat bot有2个，使self.bots["chat"]指向一个dict, 
-                # 此dict含2个键值对，键为bool型: True -> LINKAI BOT,  False -> GPT35
+                # chat bot有3个，使self.bots["chat"]指向一个dict, 
+                # 此dict含3个键值对，键为string型: 
+                #   LinkAI -> LINKAI BOT,  
+                #   BasicLLM -> QWEN_DASHSCOPE,
+                #   AdvanLLM -> CHATGPT (One-api中再指向GPT4,4o,claude等)
                 #
                 # 初始化 self.bots[typename] 为一个字典
                 self.bots[typename] = {}
                 #
-                # 创建 2 个 chat bot
+                # 创建 3 个 chat bot
                 # 创建 LINKAI 用的 chat bot
-                self.bots[typename][True] = create_bot(const.LINKAI)
-                # 创建 GPT35 用的 chat bot
-                self.bots[typename][False] = create_bot(const.CHATGPT)
+                self.bots[typename]["LinkAI"] = create_bot(const.LINKAI)
+                # 创建 BasicLLM 用的 QWEN_DASHSCOPE chat bot
+                self.bots[typename]["BasicLLM"] = create_bot(const.QWEN_DASHSCOPE)
+                # 创建 AdvanLLM 用的 CHATGPT chat bot(One-api中再指向GPT4,4o,claude等)
+                self.bots[typename]["AdvanLLM"] = create_bot(const.CHATGPT)
                 #
-                logger.debug("《《《《 Bridge().get_bot 函数内：创建2个同时存在的chat bot完成：[ LINKAI用的chat bot、GPT35用的chat bot ]")
+                logger.debug("《《《《 Bridge().get_bot 函数内：创建3个同时存在的chat bot完成：[ LinkAI, BasicLLM(QWEN_DASHSCOPE), AdvanLLM(chatGPT)(One-api中再指向GPT4,4o,claude等) ]")
                 #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
             
             elif typename == "translate":
@@ -96,18 +101,37 @@ class Bridge(object):
         # 用不用LINKAI随时在变，取最新的情况，根据不同情况返回不同的bot
         bool_use_linkai = conf()["use_linkai"]
         if typename == "chat" :
-            str_the_chat_bot_Got = "LINKAI的chat bot" if bool_use_linkai else "GPT35的chat bot"
-            logger.debug(f"《《《《 Bridge().get_bot 函数内：取 chat bot 时返回：{str_the_chat_bot_Got}")
-            return self.bots[typename][bool_use_linkai]
+            return self.bots[typename]["LinkAI"] if bool_use_linkai else self.bots[typename]["BasicLLM"]
+        elif typename == "advan-chat" :
+            return self.bots[typename]["AdvanLLM"]
         else :
             return self.bots[typename]
         #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+
+
     
     def get_bot_type(self, typename):
         return self.btype[typename]
 
+
+
+
     def fetch_reply_content(self, query, context: Context) -> Reply:
-        return self.get_bot("chat").reply(query, context)
+        #炳：先用基础LLM拿到回复
+        BasicReply = self.get_bot("chat").reply(query, context)
+
+        #炳：基础LLM没发现 不当敏感内容，则 一问二答，再问高级LLM
+        if conf().get("warning_reply_for_inappropriate_content") not in BasicReply.Content:
+
+            #炳：再用高级LLM拿到回复
+            AdvanReply = self.get_bot("advan-chat").reply(query, context)
+
+            #炳：合并2个回复 到一个回复中
+            BasicReply.Content = f"{BasicReply.Content}\n━━━━━━━━\n\n👽{AdvanReply.Content}"
+        
+        return BasicReply
+
+
 
     def fetch_voice_to_text(self, voiceFile) -> Reply:
         return self.get_bot("voice_to_text").voiceToText(voiceFile)

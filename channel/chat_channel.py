@@ -362,11 +362,11 @@ class ChatChannel(Channel):
     def _decorate_reply(self, context: Context, reply: Reply) -> Reply:
 
         #炳 增加子函数《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
-        #  AI重构前的原代码     #《《《 在回答后附加：随机显示10种小提示中的1种
+        #  AI重构前的原代码     #《《《 在回答后附加：随机显示10种（或20种或更多，数量不限）小提示中的1种
         #                     # 生成一个0到9之间（包含0与9）的随机整数
         #                     x = random.randint(0, 9)
         #                     # 从JSON对象中拿 提示数组，共 10 个提示
-        #                     hintArray = conf().get("image_create_prefix",[""])
+        #                     hintArray = conf().get("random_hintStr_array",[""])
         #                     # 从10个提示中，随机取一个
         #                     hint = hintArray[x]
         #                     # 提示前加上分隔线字符串，组成：回复文本
@@ -376,7 +376,7 @@ class ChatChannel(Channel):
         #                     + hint    
         def get_safe_random_hint(conf):
             # 从配置中获取提示数组
-            hint_array = conf().get("image_create_prefix", [])
+            hint_array = conf().get("random_hintStr_array", [])
             
             # 检查hint_array是否为空或不是列表
             if not isinstance(hint_array, list) or len(hint_array) == 0:
