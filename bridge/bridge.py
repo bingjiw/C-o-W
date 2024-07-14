@@ -11,6 +11,9 @@ from voice.factory import create_voice
 
 @singleton
 class Bridge(object):
+    # 炳：在这里添加类变量,来确定用哪种LLM，是Basic还是Advan
+    class_bool_NowNeedAdvanLLM = False
+
     def __init__(self):
         self.btype = {
             "chat": const.CHATGPT,
@@ -98,12 +101,15 @@ class Bridge(object):
 
         #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
         # 当创建好，或已经存在时，则返回 bot
-        # 用不用LINKAI随时在变，取最新的情况，根据不同情况返回不同的bot
+        # 用不用LINKAI随时在变，取最新的情况，根据不同情况(要基本LLM还是高级LLM)而返回不同的bot
         bool_use_linkai = conf()["use_linkai"]
         if typename == "chat" :
-            return self.bots[typename]["LinkAI"] if bool_use_linkai else self.bots[typename]["BasicLLM"]
-        elif typename == "advan-chat" :
-            return self.bots[typename]["AdvanLLM"]
+            if bool_use_linkai :
+                return self.bots[typename]["LinkAI"]
+            elif Bridge.class_bool_NowNeedAdvanLLM :
+                return self.bots[typename]["AdvanLLM"]
+            else :
+                return self.bots[typename]["BasicLLM"] 
         else :
             return self.bots[typename]
         #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
@@ -118,13 +124,16 @@ class Bridge(object):
 
     def fetch_reply_content(self, query, context: Context) -> Reply:
         #炳：先用基础LLM拿到回复
+        Bridge.class_bool_NowNeedAdvanLLM = False
         BasicReply = self.get_bot("chat").reply(query, context)
 
         #炳：基础LLM没发现 不当敏感内容，则 一问二答，再问高级LLM
         if conf().get("warning_reply_for_inappropriate_content") not in BasicReply.content:
 
             #炳：再用高级LLM拿到回复
-            AdvanReply = self.get_bot("advan-chat").reply(query, context)
+            Bridge.class_bool_NowNeedAdvanLLM = True
+            AdvanReply = self.get_bot("chat").reply(query, context)
+            Bridge.class_bool_NowNeedAdvanLLM = False  #重置回 False，确保后续的调用都使用BasicLLM
 
             #炳：合并2个回复 到一个回复中
             BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽{AdvanReply.content}"
