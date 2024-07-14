@@ -121,13 +121,13 @@ class Bridge(object):
         BasicReply = self.get_bot("chat").reply(query, context)
 
         #炳：基础LLM没发现 不当敏感内容，则 一问二答，再问高级LLM
-        if conf().get("warning_reply_for_inappropriate_content") not in BasicReply.Content:
+        if conf().get("warning_reply_for_inappropriate_content") not in BasicReply.content:
 
             #炳：再用高级LLM拿到回复
             AdvanReply = self.get_bot("advan-chat").reply(query, context)
 
             #炳：合并2个回复 到一个回复中
-            BasicReply.Content = f"{BasicReply.Content}\n━━━━━━━━\n\n👽{AdvanReply.Content}"
+            BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽{AdvanReply.content}"
         
         return BasicReply
 
