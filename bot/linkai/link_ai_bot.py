@@ -68,8 +68,10 @@ class LinkAIBot(Bot):
             linkai_api_key = conf().get("linkai_api_key")
 
             session_id = context["session_id"]
-            session_message = self.sessions.session_msg_query(query, session_id)
-            logger.debug(f"[LinkAI] session={session_message}, session_id={session_id}")
+            session_message = self.sessions.session_msg_query(f"上网搜索：{query}", session_id)
+            # 炳 此log中显示的system prompt会在下面被删除，并不会被发到LINKAI 
+            # 炳 把下一句移到下方 # do http request 之前了 
+            # logger.debug(f"[LinkAI] session={session_message}, session_id={session_id}")
 
             # image process
             img_cache = memory.USER_IMAGE_CACHE.get(session_id)
@@ -120,6 +122,9 @@ class LinkAIBot(Bot):
                 body["file_id"] = file_id
             logger.info(f"[LINKAI] query={query}, app_code={app_code}, model={body.get('model')}, file_id={file_id}")
             headers = {"Authorization": "Bearer " + linkai_api_key}
+
+            #炳 把log移到这里，用于记入真正发到LinkAI的内容
+            logger.debug(f"真正发到LinkAI的内容：json_body={body}, headers={headers}, session={session_message}, session_id={session_id}")
 
             # do http request
             base_url = conf().get("linkai_api_base", "https://api.link-ai.tech")
