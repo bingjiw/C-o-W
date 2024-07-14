@@ -48,6 +48,9 @@ available_setting = {
     "image_proxy": True,  # 是否需要图片代理，国内访问LinkAI时需要
     "image_create_prefix": ["画", "看", "找"],  # 开启图片回复的前缀
 
+    "basic_llm_gpt_model": "qwen-max",  #炳：基本LLM用的模型名
+    "advan_llm_gpt_model": "gpt-4o",    #炳：高级LLM用的模型名
+
     "random_hintStr_array": ["小提示1", "小提示2", "小提示3"],  # 微信回复消息最后 添加的 随机小提示
 
     "warning_reply_for_inappropriate_content": "请避免某些**词语，换一个词语或换一种说法，再问，再试\n\n（微信上发的消息与国产GPT产生的回复都受到严格监管）",

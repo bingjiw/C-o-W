@@ -125,6 +125,7 @@ class Bridge(object):
     def fetch_reply_content(self, query, context: Context) -> Reply:
         #炳：先用基础LLM拿到回复
         Bridge.class_bool_NowNeedAdvanLLM = False
+        context["gpt_model"] = conf()["basic_llm_gpt_model"]
         BasicReply = self.get_bot("chat").reply(query, context)
 
         #炳：基础LLM没发现 不当敏感内容，则 一问二答，再问高级LLM
@@ -132,6 +133,7 @@ class Bridge(object):
 
             #炳：再用高级LLM拿到回复
             Bridge.class_bool_NowNeedAdvanLLM = True
+            context["gpt_model"] = conf()["advan_llm_gpt_model"]
             AdvanReply = self.get_bot("chat").reply(query, context)
             Bridge.class_bool_NowNeedAdvanLLM = False  #重置回 False，确保后续的调用都使用BasicLLM
 
