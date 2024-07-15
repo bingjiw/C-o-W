@@ -367,7 +367,7 @@ class LinkAIBot(Bot):
             logger.debug(f"[LinkAgent] res={response}")
             if response.get("agent") and response.get("agent").get("chain") and response.get("agent").get("need_show_plugin"):
                 chain = response.get("agent").get("chain")
-                suffix = "\n\n- - - - - - - - - - - -"
+                suffix = "\n\n- - - - - - - - - - -"
                 i = 0
                 for turn in chain:
                     plugin_name = turn.get('plugin_name')
