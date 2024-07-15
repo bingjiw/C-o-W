@@ -68,7 +68,7 @@ class LinkAIBot(Bot):
             linkai_api_key = conf().get("linkai_api_key")
 
             session_id = context["session_id"]
-            session_message = self.sessions.session_msg_query(f"上网搜索：{query}", session_id)
+            session_message = self.sessions.session_msg_query(query, session_id)
             # 炳 此log中显示的system prompt会在下面被删除，并不会被发到LINKAI 
             # 炳 把下一句移到下方 # do http request 之前了 
             # logger.debug(f"[LinkAI] session={session_message}, session_id={session_id}")

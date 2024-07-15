@@ -1,5 +1,10 @@
+#《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+#《《《《《 引入另一个 专门判断回答是否是“很抱歉，我无法”之类的 函数 .py 文件
+#《《《《《 判断 AI回复的文本 决定要不要实时搜索
+from channel.ANSWER_APOLOGY import analyze_text_features__need_search
+
 from bot.bot_factory import create_bot
-from bridge.context import Context
+from bridge.context import Context,ContextType
 from bridge.reply import Reply
 from common import const
 from common.log import logger
@@ -122,20 +127,49 @@ class Bridge(object):
 
 
 
-
+    #炳：本函数中 只处理 "chat" 的文本问答。不用考虑语音的处理，语音由另一个兄弟函数fetch_voice_to_text处理
     def fetch_reply_content(self, query, context: Context) -> Reply:
-        #炳：先用基础LLM拿到回复
+        #炳：本函数中 只处理 "chat" 的文本问答
+
+        #炳：先用基础LLM 偿试拿 回复
         Bridge.class_bool_NowNeedAdvanLLM = False
         context["gpt_model"] = conf()["basic_llm_gpt_model"]
-        BasicReply = self.get_bot("chat").reply(query, context)
+        # 🚩🚩调用：基本LLM
+        BasicReply = self.bots["chat"]["BasicLLM"].reply(query, context)
+        # 不用再经get_bot函数进去兜一圈了 BasicReply = self.get_bot("chat").reply(query, context)
+
+        text = None if BasicReply is None else BasicReply.content
+        analyze_result_string, final_score = analyze_text_features__need_search(text)
+        logger.debug("\n" + analyze_result_string)
+        
+        # analyze_text_features__need_search 如果 need_search 结果值较小，则不需要再 上网实时搜索
+        # 3.5 这个“及格分数线” 是拿多十多个回复测试后，得到的一个较好的 分界值
+        if final_score < 3.5 :
+            logger.debug("《《《《 基础LLM 已得到答案。不需要 上网搜索 找答案")
+        else :
+            logger.debug("《《《《 基础LLM 得到回答是“很抱歉...”。需要 上网搜索 找答案")
+            conf()["use_linkai"] = True
+            # 🚩🚩调用：LinkAI 上网搜索（LinkAI充值额度用完后，废弃。将来有gpt-4-all等可直接上网搜索答案的LLM）
+            BasicReply = self.bots["chat"]["LinkAI"].reply(f"上网搜索：{query}", context)
+            conf()["use_linkai"] = False #用完又马上改为False，以使多线程中 下次用时安全
+            logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🌎说明这是互联网实时搜索得来的回答")
+            BasicReply.content = "🌎" + BasicReply.content 
+
+
+        # 到此，基础LLM 肯定已得到答案
+
+        #炳：如果 基础LLM 返回说有：不当敏感内容
+        if "data may contain inappropriate content" in BasicReply.content :
+            strWarning = conf().get("warning_reply_for_inappropriate_content")
+            BasicReply.content = f"{BasicReply.content}\n\n{strWarning}"
 
         #炳：基础LLM没发现 不当敏感内容，则 一问二答，再问高级LLM
-        if conf().get("warning_reply_for_inappropriate_content") not in BasicReply.content:
-
+        else :
             #炳：再用高级LLM拿到回复
             Bridge.class_bool_NowNeedAdvanLLM = True
             context["gpt_model"] = conf()["advan_llm_gpt_model"]
-            AdvanReply = self.get_bot("chat").reply(query, context)
+            # 🚩🚩调用：高级LLM
+            AdvanReply = self.bots["chat"]["AdvanLLM"].reply(query, context)
             Bridge.class_bool_NowNeedAdvanLLM = False  #重置回 False，确保后续的调用都使用BasicLLM
 
             #炳：合并2个回复 到一个回复中

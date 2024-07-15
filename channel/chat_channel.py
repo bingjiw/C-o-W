@@ -1,7 +1,7 @@
-#《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
-#《《《《《 引入另一个 专门判断回答是否是“很抱歉，我无法”之类的 函数 .py 文件
-#《《《《《 判断 AI回复的文本 决定要不要实时搜索
-from channel.ANSWER_APOLOGY import analyze_text_features__need_search
+# #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+# #《《《《《 引入另一个 专门判断回答是否是“很抱歉，我无法”之类的 函数 .py 文件
+# #《《《《《 判断 AI回复的文本 决定要不要实时搜索
+# from channel.ANSWER_APOLOGY import analyze_text_features__need_search
 #《《《《《 引入 PLUGIN_MANager_instance 以便本文件中可用它
 from plugins import instance as PLUGIN_MANager_instance
 #《《《《《 引入 bridge单例，以便下面要 重设bot时用
@@ -180,103 +180,30 @@ class ChatChannel(Channel):
         if context is None or not context.content:
             return
 
-        #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+        logger.debug("现执行到了 chat_channel.py - _handle 函数中 ready to handle context值={}".format(context))
+      
 
-        #《《《《《《 子函数：停用LINKAI插件
-        def DISABLE_LINKAI():    
-            logger.debug("《《《《 子函数内：将要 停用LINKAI插件 ")
-
-            ###因已经在_generate_reply中做了控制：只在需要LINKAI时，才产生事件emit_event。  
-            ###不用LINKAI时，就不会emit_event产生事件了
-            ###所以我后来觉得没必要 disable/enable _pluging 了，这样可以避免相同事件被多个相同的 plugin 实例听到和处理的问题
-            ###
-            ### 停用插件
-            ###success = PLUGIN_MANager_instance.disable_plugin("LINKAI")
-            ###if success:
-            ###    logger.debug(f"《《《《 子函数内：停用 LINKAI 插件 成功")
-            ###else:
-            ###    logger.debug(f"《《《《 子函数内：停用 LINKAI 插件 失败")
-
-            logger.debug(f"《《《《 子函数内：将要 把环境配置use_linkai设为False，重设bot（重选答题的GPT，让LINKAI的bot下岗）")
-            conf()["use_linkai"] = False
-            #reset会导致bot的session丢失，失去记忆。故不要执行：bridge.Bridge().reset_bot()                
-            
-            # Change the model type
-            ##### Bridge().btype["chat"] = const.CHATGPT
-            ##### logger.debug(f"《《《《 子函数内：已把bridge.py中的model改为{const.GPT35}")
-
-            return          
+        #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+        # 炳 解决问题：黑名单中的人单聊发来语音时，竟也去做语音识别，纯粹浪费。
+        #       方法：预判，如果是 黑名单中的人单聊 ，则不要做 _generate_reply 
+        #                （自然也不会在_generate_reply中去进一步做语音识别了）
+        # 消息内容匹配过程，并处理content
+        nick_name_black_list = conf().get("nick_name_black_list", [])
+        from_user_nick_name = context["msg"].from_user_nickname
+        if (
+            context.type == ContextType.VOICE and       # 如发来的是语音 
+            not context.get("isgroup", False) and       # 且是单聊（不是群聊）
+            from_user_nick_name and                     # 且发送者有呢称
+            from_user_nick_name in nick_name_black_list # 且发送者呢称在黑名单中
+        ):
+            # 黑名单过滤
+            logger.warning(f"chat_channel.py - _handle()中：黑名单中的人单聊发来语音，来者呢称'{from_user_nick_name}'在config.json配置的黑名单nick_name_black_list中，忽略（跳过，不处理），避免原代码的浪费去做语音识别")
+            return
+        #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 
-        #《《《《《《 子函数：启用LINKAI插件
-        def ENABLE_LINKAI():  
-            logger.debug("《《《《《 子函数内：启用 LINKAI 插件 ")
-
-            ###因已经在_generate_reply中做了控制：只在需要LINKAI时，才产生事件emit_event。  
-            ###不用LINKAI时，就不会emit_event产生事件了
-            ###所以我后来觉得没必要 disable/enable _pluging 了，这样可以避免相同事件被多个相同的 plugin 实例听到和处理的问题
-            ###            
-            # 启用插件
-            ###success, message = PLUGIN_MANager_instance.enable_plugin("LINKAI")
-            ###if success:
-            ###    logger.debug(f"《《《《 子函数内：启用 LINKAI 插件 成功: {message}")
-            ###else:
-            ###    logger.debug(f"《《《《 子函数内：启用 LINKAI 插件 失败: {message}")  
-            
-
-            logger.debug(f"《《《《 子函数内：将要 把环境配置use_linkai设为True，重设bot（重选答题的GPT，让LINKAI的bot上岗）")
-            conf()["use_linkai"] = True
-            #reset会导致bot的session丢失，失去记忆。故不要执行：bridge.Bridge().reset_bot()                
-                           
-            # Change the model type
-            ######Bridge().btype["chat"] = const.LINKAI
-            ######logger.debug(f"《《《《 子函数内：已把bridge.py中的model改为{const.LINKAI}")
-
-            return          
-
-
-        logger.debug("《《《《【先禁外援，首考(问)不及格(答不出)，再请外援代答】 首考前先：停用LINKAI插件（禁外援） ")
-        DISABLE_LINKAI()
-
-        logger.debug("》》》》示首考前的 context 以作对比检查 [WX] ready to handle context值={}".format(context))
-        #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
-        
         # reply的构建步骤        
         reply = self._generate_reply(context)
-
-        #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
-
-        logger.debug("《《《《 判断【首考的回答及格否?】再决定要不要请外援实时搜索。根据第1次产生的回答，来判断是否需要第2次调用（引发外援LINKAI插件来处理）")
-        text = None if reply is None else reply.content
-        analyze_result_string, final_score = analyze_text_features__need_search(text)
-        logger.debug("\n" + analyze_result_string)
-        
-        # analyze_text_features__need_search 如果 need_search 结果值较小，则不需要再 上网实时搜索
-        # 3.5 这个“及格分数线” 是拿多十多个回复测试后，得到的一个较好的 分界值
-        if final_score < 3.5 :
-            logger.debug("《《《《【首考及格】（首考成功过关）不需要再请外援上网实时搜索。不需要 第2次调用 _generate_reply（来引发LINKAI插件来处理）")
-        else :
-            logger.debug("《《《《【首考不及格】（首考没过）第1次的回答是“很抱歉...”，需要进行 第2次调用 _generate_reply（来引发LINKAI插件来处理）")
-        
-            logger.debug("《《《《 【允许请外援】（需上网搜索）：启用 LINKAI 插件")
-            ENABLE_LINKAI()
-
-            logger.debug("》》》》 输出 第1次后 第2次前 的 context 以作对比检查 context值={}".format(context))
-        
-            logger.debug("《《《《【请外援来答】执行：第2次调用 _generate_reply 以让LINKAI产生回答 ")
-            reply = self._generate_reply(context)
-
-            logger.debug("》》》》 输出补考【第2次考试】后的 context 以作对比检查 context值={}".format(context))
-        
-            logger.debug("《《《《【考完了，禁外援】：停用 LINKAI 插件 ")
-            DISABLE_LINKAI()
-
-            logger.debug("《《《《【用🌎标记答案是补考来的】在回答的开头加上🌎说明这是互联网实时搜索得来的回答")
-            reply.content = "🌎" + reply.content 
-
-        logger.debug("《《《《 overwrite 《《《《【考试结束】《《《《（首考及或补考）完成《《《《")
-        
-        #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
         
         logger.debug("[chat_channel] ready to decorate reply: {}".format(reply))
 
@@ -286,6 +213,8 @@ class ChatChannel(Channel):
 
             # reply的发送步骤
             self._send_reply(context, reply)
+
+
 
     def _generate_reply(self, context: Context, reply: Reply = Reply()) -> Reply:
         #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
