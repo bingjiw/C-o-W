@@ -226,8 +226,8 @@ class ChatChannel(Channel):
         )
 
 
-        #《《《《 只在【输入消息是#开头指令】或者【需要LINKAI时】 ，才产生事件emit_event。  不用LINKAI时，就不会emit_event产生事件了
-        if (context.content.startswith("#")) or (conf()["use_linkai"] == True):
+        #《《《《 只在【输入消息是#开头指令】，才产生事件emit_event。 
+        if (context.content.startswith("#")) :
             e_context = PluginManager().emit_event( e_context )        
         #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
         
@@ -262,6 +262,8 @@ class ChatChannel(Channel):
                 if reply.type == ReplyType.TEXT:
                     new_context = self._compose_context(ContextType.TEXT, reply.content, **context.kwargs)
                     if new_context:
+
+                        # 重复调用函数自己： 在_generate_reply函数中调用_generate_reply函数自己
                         reply = self._generate_reply(new_context)
 
                         #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《

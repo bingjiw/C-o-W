@@ -19,8 +19,8 @@ class Bridge(object):
 
     def __init__(self):
         # 炳：原先是写成类变量,但说singleton的类变量访问有问题，所以改为实例变量。
-        # 来确定用哪种LLM，是Basic还是Advan
-        self.bool_NowNeedAdvanLLM = False
+        # 来确定get_bot时返回哪种LLM，是Basic还是Advan
+        self.the_Bot_I_Want = "BasicLLM"
 
         self.btype = {
             "chat": const.CHATGPT,
@@ -106,21 +106,20 @@ class Bridge(object):
             elif typename == "translate":
                 self.bots[typename] = create_translator(self.btype[typename])
 
-        #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
-        # 当创建好，或已经存在时，则返回 bot
-        # 用不用LINKAI随时在变，取最新的情况，根据不同情况(要基本LLM还是高级LLM)而返回不同的bot
-        bool_use_linkai = conf()["use_linkai"]
+
         if typename == "chat" :
-            if self.bool_NowNeedAdvanLLM :      #必须首先判 是否要高级LLM，否则一问2答 2次都会拿到LinkAI
-                return self.bots[typename]["AdvanLLM"]
-            else :
-                if bool_use_linkai :
-                    return self.bots[typename]["LinkAI"]
-                else :
-                    return self.bots[typename]["BasicLLM"] 
+
+            #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+            # 当创建好，或已经存在时，则返回 bot
+            # 根据 实例变量 the_Bot_I_Want ，要啥bot 给啥bot 
+            result_bot = self.bots[typename][self.the_Bot_I_Want]
+            self.the_Bot_I_Want = "BasicLLM" #马上恢复为默认的 基本LLM的bot
+            return result_bot
+            # 》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+
         else :
             return self.bots[typename]
-        #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+        
 
 
     
@@ -135,10 +134,10 @@ class Bridge(object):
         #炳：所以，都要用self.get_bot("chat"), 此函数中若bot还没创建，它会创建
 
         #炳：先用基础LLM 偿试拿 回复
-        self.bool_NowNeedAdvanLLM = False
         context["gpt_model"] = conf()["basic_llm_gpt_model"]
         # 🚩🚩调用：基本LLM
-        BasicReply = self.get_bot("chat")["BasicLLM"].reply(query, context)
+        self.the_Bot_I_Want = "BasicLLM"
+        BasicReply = self.get_bot("chat").reply(query, context)
 
         text = None if BasicReply is None else BasicReply.content
         analyze_result_string, final_score = analyze_text_features__need_search(text)
@@ -150,10 +149,11 @@ class Bridge(object):
             logger.debug("《《《《 基础LLM 已得到答案。不需要 上网搜索 找答案")
         else :
             logger.debug("《《《《 基础LLM 得到回答是“很抱歉...”。需要 上网搜索 找答案")
-            conf()["use_linkai"] = True
+
             # 🚩🚩调用：LinkAI 上网搜索（LinkAI充值额度用完后，废弃。将来有gpt-4-all等可直接上网搜索答案的LLM）
-            BasicReply = self.get_bot("chat")["LinkAI"].reply(f"上网搜索：{query}", context)
-            conf()["use_linkai"] = False #用完又马上改为False，以使多线程中 下次用时安全
+            self.the_Bot_I_Want = "LinkAI"
+            BasicReply = self.get_bot("chat").reply(f"上网搜索：{query}", context)
+            # 
             logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🌎说明这是互联网实时搜索得来的回答")
             BasicReply.content = "🌎" + BasicReply.content 
 
@@ -168,11 +168,10 @@ class Bridge(object):
         #炳：基础LLM没发现 不当敏感内容，则 一问二答，再问高级LLM
         else :
             #炳：再用高级LLM拿到回复
-            self.bool_NowNeedAdvanLLM = True
             context["gpt_model"] = conf()["advan_llm_gpt_model"]
             # 🚩🚩调用：高级LLM
-            AdvanReply = self.get_bot("chat")["AdvanLLM"].reply(query, context)
-            self.bool_NowNeedAdvanLLM = False  #重置回 False，确保后续的调用都使用BasicLLM
+            self.the_Bot_I_Want = "AdvanLLM"
+            AdvanReply = self.get_bot("chat").reply(query, context)
 
             #炳：合并2个回复 到一个回复中
             BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽{AdvanReply.content}"
