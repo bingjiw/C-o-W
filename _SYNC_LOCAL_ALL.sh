@@ -1,5 +1,30 @@
 #!/bin/bash
 
+echo '很猛的脚本，会删除本地运行时产生的所文件，三思后小心使用，
+如曾经运行，删除以下重要文件举例：
+
+Removing config.json
+
+Removing user_datas.pkl
+Removing itchat.pkl
+
+Removing __pycache__/
+Removing translate/__pycache__/
+
+Removing tmp/
+Removing run.log
+Removing output.log
+Removing nohup.out
+Removing run.20240701_203400.log
+Removing output.20240701_203400.log
+Removing run.20240701_212254_RenamedAsHistoryBak_YouCanDeleteMe.log
+Removing output.20240715_165540_RenamedAsHistoryBak_YouCanDeleteMe.log
+
+
+三思后，按回车继续。  Press Enter to continue...'
+
+read
+
 echo "开始同步..."
 
 # 获取远程更新并清理过时的远程引用
