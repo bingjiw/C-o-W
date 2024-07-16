@@ -8,6 +8,8 @@ __pycache__/
 venv*
 *.pyc
 config.json
+config.测试.json
+config.生产.json
 QR.png
 nohup.out
 tmp
