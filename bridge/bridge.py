@@ -131,14 +131,14 @@ class Bridge(object):
 
     #炳：本函数中 只处理 "chat" 的文本问答。不用考虑语音的处理，语音由另一个兄弟函数fetch_voice_to_text处理
     def fetch_reply_content(self, query, context: Context) -> Reply:
-        #炳：本函数中 只处理 "chat" 的文本问答
+        #炳：本函数中 用 self.bots["chat"]["BasicLLM"] 会出错，因为self.bots["chat"]还没创建
+        #炳：所以，都要用self.get_bot("chat"), 此函数中若bot还没创建，它会创建
 
         #炳：先用基础LLM 偿试拿 回复
         self.bool_NowNeedAdvanLLM = False
         context["gpt_model"] = conf()["basic_llm_gpt_model"]
         # 🚩🚩调用：基本LLM
-        BasicReply = self.bots["chat"]["BasicLLM"].reply(query, context)
-        # 不用再经get_bot函数进去兜一圈了 BasicReply = self.get_bot("chat").reply(query, context)
+        BasicReply = self.get_bot("chat")["BasicLLM"].reply(query, context)
 
         text = None if BasicReply is None else BasicReply.content
         analyze_result_string, final_score = analyze_text_features__need_search(text)
@@ -152,7 +152,7 @@ class Bridge(object):
             logger.debug("《《《《 基础LLM 得到回答是“很抱歉...”。需要 上网搜索 找答案")
             conf()["use_linkai"] = True
             # 🚩🚩调用：LinkAI 上网搜索（LinkAI充值额度用完后，废弃。将来有gpt-4-all等可直接上网搜索答案的LLM）
-            BasicReply = self.bots["chat"]["LinkAI"].reply(f"上网搜索：{query}", context)
+            BasicReply = self.get_bot("chat")["LinkAI"].reply(f"上网搜索：{query}", context)
             conf()["use_linkai"] = False #用完又马上改为False，以使多线程中 下次用时安全
             logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🌎说明这是互联网实时搜索得来的回答")
             BasicReply.content = "🌎" + BasicReply.content 
@@ -171,7 +171,7 @@ class Bridge(object):
             self.bool_NowNeedAdvanLLM = True
             context["gpt_model"] = conf()["advan_llm_gpt_model"]
             # 🚩🚩调用：高级LLM
-            AdvanReply = self.bots["chat"]["AdvanLLM"].reply(query, context)
+            AdvanReply = self.get_bot("chat")["AdvanLLM"].reply(query, context)
             self.bool_NowNeedAdvanLLM = False  #重置回 False，确保后续的调用都使用BasicLLM
 
             #炳：合并2个回复 到一个回复中
