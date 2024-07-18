@@ -11,18 +11,39 @@ from common.log import logger
 # 将所有可用的配置项写在字典里, 请使用小写字母
 # 此处的配置值无实际意义，程序不会读取此处的配置，仅用于提示格式，请将配置加入到config.json中
 available_setting = {
-  "BasicLLM": {
-    "open_ai_api_key": "sk---------", 
-    "open_ai_api_base": "http://127.0.0.1:3000/v1", 
-    "model": "qwen-max"
-  },
 
-  "AdvanLLM": {
-    "open_ai_api_key": "sk---------", 
-    "open_ai_api_base": "http://127.0.0.1:3000/v1", 
-    "model": "gpt-4o"
-  },
+    #下方是炳加的：VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV  
+    "BasicLLM": {
+        "open_ai_api_key": "sk---------", 
+        "open_ai_api_base": "http://127.0.0.1:3000/v1", 
+        "model": "qwen-max"
+    },
 
+    "AdvanLLM": {
+        "open_ai_api_key": "sk---------", 
+        "open_ai_api_base": "http://127.0.0.1:3000/v1", 
+        "model": "gpt-4o"
+    },
+
+    # 迅飞是通过以下URL来确定调哪个模型的
+    # Spark4.0 Ultra 请求地址，对应的domain参数为4.0Ultra：
+    # wss://spark-api.xf-yun.com/v4.0/chat
+
+    # Spark Max请求地址，对应的domain参数为generalv3.5：
+    # wss://spark-api.xf-yun.com/v3.5/chat
+
+    # Spark Pro-128K请求地址，对应的domain参数为pro-128k：
+    # wss://spark-api.xf-yun.com/chat/pro-128k
+
+    # Spark Pro请求地址，对应的domain参数为generalv3：
+    # wss://spark-api.xf-yun.com/v3.1/chat
+
+    # Spark V2.0请求地址，对应的domain参数为generalv2：
+    # wss://spark-api.xf-yun.com/v2.1/chat
+
+    # Spark Lite请求地址，对应的domain参数为general：
+    # wss://spark-api.xf-yun.com/v1.1/chat
+    #上方是炳加的：AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
     # openai api配置
     "open_ai_api_key": "",  # openai api key
@@ -96,14 +117,18 @@ available_setting = {
     "claude_uuid": "",
     # claude api key
     "claude_api_key": "",
+
     # 通义千问API, 获取方式查看文档 https://help.aliyun.com/document_detail/2587494.html
+    # 炳：以下是老旧的 通义千问API，现已不用。现用 灵积(通义新版sdk)
     "qwen_access_key_id": "",
     "qwen_access_key_secret": "",
     "qwen_agent_key": "",
     "qwen_app_id": "",
-    "qwen_node_id": "",  # 流程编排模型用到的id，如果没有用到qwen_node_id，请务必保持为空字符串
+    "qwen_node_id": "借作注释用",  # 流程编排模型用到的id，如果没有用到qwen_node_id，请务必保持为空字符串
+    
     # 阿里灵积(通义新版sdk)模型api key
     "dashscope_api_key": "",
+
     # Google Gemini Api Key
     "gemini_api_key": "",
     # wework的通用配置

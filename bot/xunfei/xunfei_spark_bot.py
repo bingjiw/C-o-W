@@ -34,6 +34,25 @@ queue_map = dict()
 reply_map = dict()
 
 
+    # 迅飞是通过以下URL来确定调哪个模型的
+    # Spark4.0 Ultra 请求地址，对应的domain参数为4.0Ultra：
+    # wss://spark-api.xf-yun.com/v4.0/chat
+
+    # Spark Max请求地址，对应的domain参数为generalv3.5：
+    # wss://spark-api.xf-yun.com/v3.5/chat
+
+    # Spark Pro-128K请求地址，对应的domain参数为pro-128k：
+    # wss://spark-api.xf-yun.com/chat/pro-128k
+
+    # Spark Pro请求地址，对应的domain参数为generalv3：
+    # wss://spark-api.xf-yun.com/v3.1/chat
+
+    # Spark V2.0请求地址，对应的domain参数为generalv2：
+    # wss://spark-api.xf-yun.com/v2.1/chat
+
+    # Spark Lite请求地址，对应的domain参数为general：
+    # wss://spark-api.xf-yun.com/v1.1/chat
+    
 class XunFeiBot(Bot):
     def __init__(self):
         super().__init__()

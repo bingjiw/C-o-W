@@ -92,15 +92,20 @@ class Bridge(object):
                 # 初始化 self.bots[typename] 为一个字典
                 self.bots[typename] = {}
                 #
-                # 创建 3 个 chat bot
+                # 创建 4 个 chat bot
                 # 创建 LINKAI 用的 chat bot
                 self.bots[typename]["LinkAI"] = create_bot(const.LINKAI)
+                #
                 # 创建 BasicLLM 用的 CHATGPT chat bot(One-api中再指向 Deepseek-v2, qwen-max 等 高级LLM)
                 self.bots[typename]["BasicLLM"] = create_bot("ChatGPTBot.BasicLLM")
+                #
                 # 创建 AdvanLLM 用的 CHATGPT chat bot(One-api中再指向GPT4,4o,claude等 高级LLM)
                 self.bots[typename]["AdvanLLM"] = create_bot("ChatGPTBot.AdvanLLM")
                 #
-                logger.debug("《《《《 Bridge().get_bot 函数内：创建3个同时存在的chat bot完成：[ LinkAI, BasicLLM(QWEN_DASHSCOPE), AdvanLLM(chatGPT)(One-api中再指向GPT4,4o,claude等) ]")
+                # 自带搜索能力的SearchableLLM: XUNFEI 的 Spark Max
+                self.bots[typename]["SearchableLLM"] = create_bot(const.XUNFEI)
+                #
+                logger.debug("《《《《 Bridge().get_bot 函数内：创建4个同时存在的chat bot完成：[ LinkAI, SearchableLLM(XunFei Spark Max), BasicLLM(QWEN_DASHSCOPE), AdvanLLM(chatGPT)(One-api中再指向GPT4,4o,claude等) ]")
                 #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
             
             elif typename == "translate":
@@ -150,9 +155,14 @@ class Bridge(object):
         else :
             logger.debug("《《《《 基础LLM 得到回答是“很抱歉...”。需要 上网搜索 找答案")
 
+            """         
             # 🚩🚩调用：LinkAI 上网搜索（LinkAI充值额度用完后，废弃。将来有gpt-4-all等可直接上网搜索答案的LLM）
             self.the_Bot_I_Want = "LinkAI"
             BasicReply = self.get_bot("chat").reply(f"上网搜索：{query}", context)
+             """
+            # 🚩🚩调用：SearchableLLM: XUNFEI 的 Spark Max 上网搜索
+            self.the_Bot_I_Want = "SearchableLLM"
+            BasicReply = self.get_bot("chat").reply(f"上网搜索：{query}", context)            
             # 
             logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🌎说明这是互联网实时搜索得来的回答")
             BasicReply.content = "🌎" + BasicReply.content 
