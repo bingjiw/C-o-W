@@ -16,16 +16,80 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 import websocket
-import json
+import datetime
+import hashlib
 import base64
+import hmac
+import json
+from urllib.parse import urlencode
 import time
-import wave
 import ssl
+from wsgiref.handlers import format_date_time
+from datetime import datetime
+from time import mktime
+import _thread as thread
+import os
+import wave
 import threading
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-class Ws_Param:
-    # ... (keep the existing Ws_Param class implementation)
+STATUS_FIRST_FRAME = 0  # 第一帧的标识
+STATUS_CONTINUE_FRAME = 1  # 中间帧标识
+STATUS_LAST_FRAME = 2  # 最后一帧的标识
+
+#############
+#whole_dict 是用来存储返回值的，由于带语音修正，所以用dict来存储，有更新的化pop之前的值，最后再合并
+global whole_dict
+#这个文档是官方文档改的，这个参数是用来做函数调用时用的
+global wsParam
+##############
+
+
+class Ws_Param(object):
+    # 初始化
+    def __init__(self, APPID, APIKey, APISecret,BusinessArgs, AudioFile):
+        self.APPID = APPID
+        self.APIKey = APIKey
+        self.APISecret = APISecret
+        self.AudioFile = AudioFile
+        self.BusinessArgs = BusinessArgs
+        # 公共参数(common)
+        self.CommonArgs = {"app_id": self.APPID}
+        # 业务参数(business)，更多个性化参数可在官网查看
+        #self.BusinessArgs = {"domain": "iat", "language": "zh_cn", "accent": "mandarin", "vinfo":1,"vad_eos":10000}
+
+    # 生成url
+    def create_url(self):
+        url = 'wss://ws-api.xfyun.cn/v2/iat'
+        # 生成RFC1123格式的时间戳
+        now = datetime.now()
+        date = format_date_time(mktime(now.timetuple()))
+
+        # 拼接字符串
+        signature_origin = "host: " + "ws-api.xfyun.cn" + "\n"
+        signature_origin += "date: " + date + "\n"
+        signature_origin += "GET " + "/v2/iat " + "HTTP/1.1"
+        # 进行hmac-sha256进行加密
+        signature_sha = hmac.new(self.APISecret.encode('utf-8'), signature_origin.encode('utf-8'),
+                                 digestmod=hashlib.sha256).digest()
+        signature_sha = base64.b64encode(signature_sha).decode(encoding='utf-8')
+
+        authorization_origin = "api_key=\"%s\", algorithm=\"%s\", headers=\"%s\", signature=\"%s\"" % (
+            self.APIKey, "hmac-sha256", "host date request-line", signature_sha)
+        authorization = base64.b64encode(authorization_origin.encode('utf-8')).decode(encoding='utf-8')
+        # 将请求的鉴权参数组合为字典
+        v = {
+            "authorization": authorization,
+            "date": date,
+            "host": "ws-api.xfyun.cn"
+        }
+        # 拼接鉴权参数，生成url
+        url = url + '?' + urlencode(v)
+        #print("date: ",date)
+        #print("v: ",v)
+        # 此处打印出建立连接时候的url,参考本demo的时候可取消上方打印的注释，比对相同参数时生成的url与自己代码生成的url是否一致
+        #print('websocket url :', url)
+        return url
 
 class WebSocketClient:
     def __init__(self, url, on_message, on_error, on_close):
