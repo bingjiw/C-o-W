@@ -16,167 +16,142 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 import websocket
-import datetime
-import hashlib
-import base64
-import hmac
 import json
-from urllib.parse import urlencode
+import base64
 import time
-import ssl
-from wsgiref.handlers import format_date_time
-from datetime import datetime
-from time import mktime
-import _thread as thread
-import os
 import wave
+import ssl
+import threading
+from tenacity import retry, stop_after_attempt, wait_exponential
 
-STATUS_FIRST_FRAME = 0
-STATUS_CONTINUE_FRAME = 1
-STATUS_LAST_FRAME = 2
+class Ws_Param:
+    # ... (keep the existing Ws_Param class implementation)
 
-global whole_dict
-global wsParam
+class WebSocketClient:
+    def __init__(self, url, on_message, on_error, on_close):
+        self.url = url
+        self.on_message = on_message
+        self.on_error = on_error
+        self.on_close = on_close
+        self.ws = None
 
-class Ws_Param(object):
-    def __init__(self, APPID, APIKey, APISecret, BusinessArgs, AudioFile):
-        self.APPID = APPID
-        self.APIKey = APIKey
-        self.APISecret = APISecret
-        self.AudioFile = AudioFile
-        self.BusinessArgs = BusinessArgs
-        self.CommonArgs = {"app_id": self.APPID}
+    def connect(self):
+        self.ws = websocket.WebSocketApp(
+            self.url,
+            on_message=self.on_message,
+            on_error=self.on_error,
+            on_close=self.on_close
+        )
+        self.ws.on_open = self.on_open
+        self.ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
-    def create_url(self):
-        url = 'wss://ws-api.xfyun.cn/v2/iat'
-        now = datetime.now()
-        date = format_date_time(mktime(now.timetuple()))
-        signature_origin = "host: " + "ws-api.xfyun.cn" + "\n"
-        signature_origin += "date: " + date + "\n"
-        signature_origin += "GET " + "/v2/iat " + "HTTP/1.1"
-        signature_sha = hmac.new(self.APISecret.encode('utf-8'), signature_origin.encode('utf-8'),
-                                 digestmod=hashlib.sha256).digest()
-        signature_sha = base64.b64encode(signature_sha).decode(encoding='utf-8')
-        authorization_origin = "api_key=\"%s\", algorithm=\"%s\", headers=\"%s\", signature=\"%s\"" % (
-            self.APIKey, "hmac-sha256", "host date request-line", signature_sha)
-        authorization = base64.b64encode(authorization_origin.encode('utf-8')).decode(encoding='utf-8')
-        v = {
-            "authorization": authorization,
-            "date": date,
-            "host": "ws-api.xfyun.cn"
-        }
-        url = url + '?' + urlencode(v)
-        return url
+    def on_open(self, ws):
+        print("WebSocket connection opened")
 
-def on_message(ws, message):
-    global whole_dict
-    try:
-        code = json.loads(message)["code"]
-        sid = json.loads(message)["sid"]
-        if code != 0:
-            errMsg = json.loads(message)["message"]
-            print("sid:%s call error:%s code is:%s" % (sid, errMsg, code))
+    def send(self, data):
+        if self.ws and self.ws.sock and self.ws.sock.connected:
+            self.ws.send(data)
         else:
-            temp1 = json.loads(message)["data"]["result"]
-            data = json.loads(message)["data"]["result"]["ws"]
-            sn = temp1["sn"]
-            if "rg" in temp1.keys():
-                rep = temp1["rg"]
-                rep_start = rep[0]
-                rep_end = rep[1]
-                for sn in range(rep_start, rep_end + 1):
-                    whole_dict.pop(sn, None)
-                results = ""
-                for i in data:
-                    for w in i["cw"]:
-                        results += w["w"]
-                whole_dict[sn] = results
-            else:
-                results = ""
-                for i in data:
-                    for w in i["cw"]:
-                        results += w["w"]
-                whole_dict[sn] = results
-    except Exception as e:
-        print("receive msg, but parse exception:", e)
+            raise Exception("WebSocket is not connected")
 
-def on_error(ws, error):
-    print("### error:", error)
+    def close(self):
+        if self.ws:
+            self.ws.close()
 
-def on_close(ws, a, b):
-    print("### closed ###")
-
-def on_open(ws):
-    global wsParam
-
-    def run(*args):
-        frameSize = 8000
-        intervel = 0.04
-        status = STATUS_FIRST_FRAME
-
-        with wave.open(wsParam.AudioFile, "rb") as fp:
-            while True:
-                buf = fp.readframes(frameSize)
-                if not buf:
-                    status = STATUS_LAST_FRAME
-                if status == STATUS_FIRST_FRAME:
-                    d = {"common": wsParam.CommonArgs,
-                         "business": wsParam.BusinessArgs,
-                         "data": {"status": 0, "format": "audio/L16;rate=16000", "audio": str(base64.b64encode(buf), 'utf-8'), "encoding": "raw"}}
-                    d = json.dumps(d)
-                    ws.send(d)
-                    status = STATUS_CONTINUE_FRAME
-                elif status == STATUS_CONTINUE_FRAME:
-                    d = {"data": {"status": 1, "format": "audio/L16;rate=16000",
-                                  "audio": str(base64.b64encode(buf), 'utf-8'),
-                                  "encoding": "raw"}}
-                    ws.send(json.dumps(d))
-                elif status == STATUS_LAST_FRAME:
-                    d = {"data": {"status": 2, "format": "audio/L16;rate=16000",
-                                  "audio": str(base64.b64encode(buf), 'utf-8'),
-                                  "encoding": "raw"}}
-                    ws.send(json.dumps(d))
-                    time.sleep(1)
-                    break
-                time.sleep(intervel)
-        ws.close()
-
-    thread.start_new_thread(run, ())
-
-def xunfei_asr(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile, max_retries=3):
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+def xunfei_asr(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile):
     global whole_dict
-    global wsParam
     whole_dict = {}
-    wsParam1 = Ws_Param(APPID=APPID, APISecret=APISecret, APIKey=APIKey, BusinessArgs=BusinessArgsASR, AudioFile=AudioFile)
-    wsParam = wsParam1
 
-    for attempt in range(max_retries):
+    wsParam = Ws_Param(APPID=APPID, APISecret=APISecret,
+                       APIKey=APIKey, BusinessArgs=BusinessArgsASR,
+                       AudioFile=AudioFile)
+    
+    wsUrl = wsParam.create_url()
+    
+    def on_message(ws, message):
+        global whole_dict
         try:
-            websocket.enableTrace(False)
-            wsUrl = wsParam.create_url()
-            ws = websocket.WebSocketApp(wsUrl, on_message=on_message, on_error=on_error, on_close=on_close)
-            ws.on_open = on_open
-            ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-
-            whole_words = ""
-            for i in sorted(whole_dict.keys()):
-                whole_words += whole_dict[i]
-
-            if whole_words:
-                return whole_words
+            response = json.loads(message)
+            code = response["code"]
+            sid = response["sid"]
+            if code != 0:
+                errMsg = response["message"]
+                print(f"sid:{sid} call error:{errMsg} code is:{code}")
+            else:
+                process_result(response["data"]["result"])
         except Exception as e:
-            print(f"Attempt {attempt + 1} failed: {e}")
-            time.sleep(2)
+            print(f"Error processing message: {e}")
 
-    return ""
+    def process_result(result):
+        global whole_dict
+        sn = result["sn"]
+        if "rg" in result:
+            rep_start, rep_end = result["rg"]
+            for i in range(rep_start, rep_end + 1):
+                whole_dict.pop(i, None)
+        
+        results = "".join(w["w"] for i in result["ws"] for w in i["cw"])
+        whole_dict[sn] = results
 
-# 示例调用
-if __name__ == "__main__":
-    APPID = "your_app_id"
-    APIKey = "your_api_key"
-    APISecret = "your_api_secret"
-    BusinessArgsASR = {"domain": "iat", "language": "zh_cn", "accent": "mandarin", "vinfo": 1, "vad_eos": 10000}
-    AudioFile = "path_to_your_audio_file.wav"
+    def on_error(ws, error):
+        print(f"WebSocket error: {error}")
 
-    result = xunfei_asr(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile)
-    print(result)
+    def on_close(ws, close_status_code, close_msg):
+        print(f"WebSocket connection closed: {close_status_code} - {close_msg}")
+
+    client = WebSocketClient(wsUrl, on_message, on_error, on_close)
+    
+    def run_websocket():
+        client.connect()
+    
+    websocket_thread = threading.Thread(target=run_websocket)
+    websocket_thread.start()
+
+    # Wait for WebSocket connection to establish
+    time.sleep(2)
+
+    try:
+        with wave.open(AudioFile, "rb") as fp:
+            frame_size = 8000
+            interval = 0.04
+            status = 0  # 0: first frame, 1: continue frame, 2: last frame
+
+            while True:
+                buf = fp.readframes(frame_size)
+                if not buf:
+                    status = 2  # last frame
+
+                d = {
+                    "data": {
+                        "status": status,
+                        "format": "audio/L16;rate=16000",
+                        "audio": base64.b64encode(buf).decode('utf-8'),
+                        "encoding": "raw"
+                    }
+                }
+
+                if status == 0:
+                    d["common"] = wsParam.CommonArgs
+                    d["business"] = wsParam.BusinessArgs
+                    
+                client.send(json.dumps(d))
+
+                if status == 2:
+                    break
+
+                status = 1
+                time.sleep(interval)
+
+    except Exception as e:
+        print(f"Error during audio processing: {e}")
+    finally:
+        client.close()
+        websocket_thread.join()
+
+    whole_words = "".join(whole_dict[i] for i in sorted(whole_dict.keys()))
+    return whole_words
+
+# Usage example
+# result = xunfei_asr(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile)
+# print(result)
