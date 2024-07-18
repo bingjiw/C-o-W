@@ -17,6 +17,20 @@ def create_bot(bot_type):
         from bot.baidu.baidu_wenxin import BaiduWenxinBot
         return BaiduWenxinBot()
 
+
+    #炳，基本LLM
+    elif bot_type == "BasicLLM":
+        # ChatGPT 网页端web接口
+        from bot.chatgpt.chat_gpt_bot import ChatGPTBot
+        return ChatGPTBot(WhichLLM="BasicLLM")
+    
+    #炳，高级LLM
+    elif bot_type == "AdvanLLM":
+        # ChatGPT 网页端web接口
+        from bot.chatgpt.chat_gpt_bot import ChatGPTBot
+        return ChatGPTBot(WhichLLM="AdvanLLM")
+
+
     elif bot_type == const.CHATGPT:
         # ChatGPT 网页端web接口
         from bot.chatgpt.chat_gpt_bot import ChatGPTBot

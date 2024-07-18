@@ -95,10 +95,10 @@ class Bridge(object):
                 # 创建 3 个 chat bot
                 # 创建 LINKAI 用的 chat bot
                 self.bots[typename]["LinkAI"] = create_bot(const.LINKAI)
-                # 创建 BasicLLM 用的 QWEN_DASHSCOPE chat bot
-                self.bots[typename]["BasicLLM"] = create_bot(const.QWEN_DASHSCOPE)
-                # 创建 AdvanLLM 用的 CHATGPT chat bot(One-api中再指向GPT4,4o,claude等)
-                self.bots[typename]["AdvanLLM"] = create_bot(const.CHATGPT)
+                # 创建 BasicLLM 用的 CHATGPT chat bot(One-api中再指向 Deepseek-v2, qwen-max 等 高级LLM)
+                self.bots[typename]["BasicLLM"] = create_bot("BasicLLM")
+                # 创建 AdvanLLM 用的 CHATGPT chat bot(One-api中再指向GPT4,4o,claude等 高级LLM)
+                self.bots[typename]["AdvanLLM"] = create_bot("AdvanLLM")
                 #
                 logger.debug("《《《《 Bridge().get_bot 函数内：创建3个同时存在的chat bot完成：[ LinkAI, BasicLLM(QWEN_DASHSCOPE), AdvanLLM(chatGPT)(One-api中再指向GPT4,4o,claude等) ]")
                 #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
