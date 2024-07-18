@@ -15,6 +15,13 @@
 #  错误码链接：https://www.xfyun.cn/document/error-code （code返回错误码时必看）
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+# 炳把以下所有代码替换为了：ChatGPT4o改进后的代码
+# 代码说明
+# 重试机制：xunfei_asr 函数添加了 max_retries 参数，默认尝试 3 次。如果在某次尝试中失败，会等待 2 秒后再重试。
+# 错误处理：在每次尝试中捕获异常并记录失败信息。
+# 日志记录：打印失败的尝试信息，帮助你调试和分析问题。
+# 这些改进可以帮助你在网络不稳定的情况下提高代码的健壮性和可靠性。如果问题仍然存在，可以考虑进一步优化网络环境，或者联系讯飞的技术支持获取帮助。
+
 import websocket
 import datetime
 import hashlib
@@ -30,200 +37,153 @@ from time import mktime
 import _thread as thread
 import os
 import wave
-import threading
-from tenacity import retry, stop_after_attempt, wait_exponential
 
-STATUS_FIRST_FRAME = 0  # 第一帧的标识
-STATUS_CONTINUE_FRAME = 1  # 中间帧标识
-STATUS_LAST_FRAME = 2  # 最后一帧的标识
+STATUS_FIRST_FRAME = 0
+STATUS_CONTINUE_FRAME = 1
+STATUS_LAST_FRAME = 2
 
-#############
-#whole_dict 是用来存储返回值的，由于带语音修正，所以用dict来存储，有更新的化pop之前的值，最后再合并
 global whole_dict
-#这个文档是官方文档改的，这个参数是用来做函数调用时用的
 global wsParam
-##############
-
 
 class Ws_Param(object):
-    # 初始化
-    def __init__(self, APPID, APIKey, APISecret,BusinessArgs, AudioFile):
+    def __init__(self, APPID, APIKey, APISecret, BusinessArgs, AudioFile):
         self.APPID = APPID
         self.APIKey = APIKey
         self.APISecret = APISecret
         self.AudioFile = AudioFile
         self.BusinessArgs = BusinessArgs
-        # 公共参数(common)
         self.CommonArgs = {"app_id": self.APPID}
-        # 业务参数(business)，更多个性化参数可在官网查看
-        #self.BusinessArgs = {"domain": "iat", "language": "zh_cn", "accent": "mandarin", "vinfo":1,"vad_eos":10000}
 
-    # 生成url
     def create_url(self):
         url = 'wss://ws-api.xfyun.cn/v2/iat'
-        # 生成RFC1123格式的时间戳
         now = datetime.now()
         date = format_date_time(mktime(now.timetuple()))
-
-        # 拼接字符串
         signature_origin = "host: " + "ws-api.xfyun.cn" + "\n"
         signature_origin += "date: " + date + "\n"
         signature_origin += "GET " + "/v2/iat " + "HTTP/1.1"
-        # 进行hmac-sha256进行加密
         signature_sha = hmac.new(self.APISecret.encode('utf-8'), signature_origin.encode('utf-8'),
                                  digestmod=hashlib.sha256).digest()
         signature_sha = base64.b64encode(signature_sha).decode(encoding='utf-8')
-
         authorization_origin = "api_key=\"%s\", algorithm=\"%s\", headers=\"%s\", signature=\"%s\"" % (
             self.APIKey, "hmac-sha256", "host date request-line", signature_sha)
         authorization = base64.b64encode(authorization_origin.encode('utf-8')).decode(encoding='utf-8')
-        # 将请求的鉴权参数组合为字典
         v = {
             "authorization": authorization,
             "date": date,
             "host": "ws-api.xfyun.cn"
         }
-        # 拼接鉴权参数，生成url
         url = url + '?' + urlencode(v)
-        #print("date: ",date)
-        #print("v: ",v)
-        # 此处打印出建立连接时候的url,参考本demo的时候可取消上方打印的注释，比对相同参数时生成的url与自己代码生成的url是否一致
-        #print('websocket url :', url)
         return url
 
-class WebSocketClient:
-    def __init__(self, url, on_message, on_error, on_close):
-        self.url = url
-        self.on_message = on_message
-        self.on_error = on_error
-        self.on_close = on_close
-        self.ws = None
-
-    def connect(self):
-        self.ws = websocket.WebSocketApp(
-            self.url,
-            on_message=self.on_message,
-            on_error=self.on_error,
-            on_close=self.on_close
-        )
-        self.ws.on_open = self.on_open
-        self.ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-
-    def on_open(self, ws):
-        print("WebSocket connection opened")
-
-    def send(self, data):
-        if self.ws and self.ws.sock and self.ws.sock.connected:
-            self.ws.send(data)
-        else:
-            raise Exception("WebSocket is not connected")
-
-    def close(self):
-        if self.ws:
-            self.ws.close()
-
-def xunfei_asr(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile):
+def on_message(ws, message):
     global whole_dict
-    whole_dict = {}
-
-    wsParam = Ws_Param(APPID=APPID, APISecret=APISecret,
-                       APIKey=APIKey, BusinessArgs=BusinessArgsASR,
-                       AudioFile=AudioFile)
-    
-    wsUrl = wsParam.create_url()
-    
-    def on_message(ws, message):
-        global whole_dict
-        try:
-            response = json.loads(message)
-            code = response["code"]
-            sid = response["sid"]
-            if code != 0:
-                errMsg = response["message"]
-                print(f"sid:{sid} call error:{errMsg} code is:{code}")
-            else:
-                process_result(response["data"]["result"])
-        except Exception as e:
-            print(f"Error processing message: {e}")
-
-    def process_result(result):
-        global whole_dict
-        sn = result["sn"]
-        if "rg" in result:
-            rep_start, rep_end = result["rg"]
-            for i in range(rep_start, rep_end + 1):
-                whole_dict.pop(i, None)
-        
-        results = "".join(w["w"] for i in result["ws"] for w in i["cw"])
-        whole_dict[sn] = results
-
-    def on_error(ws, error):
-        print(f"WebSocket error: {error}")
-
-    def on_close(ws, close_status_code, close_msg):
-        print(f"WebSocket connection closed: {close_status_code} - {close_msg}")
-
-    client = WebSocketClient(wsUrl, on_message, on_error, on_close)
-    
-    def run_websocket():
-        client.connect()
-    
-    websocket_thread = threading.Thread(target=run_websocket)
-    websocket_thread.start()
-
-    # Wait for WebSocket connection to establish with a timeout
-    connection_timeout = 10  # seconds
-    if not client.connected.wait(timeout=connection_timeout):
-        raise Exception(f"WebSocket connection could not be established within {connection_timeout} seconds")
-
     try:
-        with wave.open(AudioFile, "rb") as fp:
-            frame_size = 8000
-            interval = 0.04
-            status = 0  # 0: first frame, 1: continue frame, 2: last frame
-
-            while True:
-                buf = fp.readframes(frame_size)
-                if not buf:
-                    status = 2  # last frame
-
-                d = {
-                    "data": {
-                        "status": status,
-                        "format": "audio/L16;rate=16000",
-                        "audio": base64.b64encode(buf).decode('utf-8'),
-                        "encoding": "raw"
-                    }
-                }
-
-                if status == 0:
-                    d["common"] = wsParam.CommonArgs
-                    d["business"] = wsParam.BusinessArgs
-                    
-                client.send(json.dumps(d))
-
-                if status == 2:
-                    break
-
-                status = 1
-                time.sleep(interval)
-
-        # Wait for final processing
-        time.sleep(2)
-
+        code = json.loads(message)["code"]
+        sid = json.loads(message)["sid"]
+        if code != 0:
+            errMsg = json.loads(message)["message"]
+            print("sid:%s call error:%s code is:%s" % (sid, errMsg, code))
+        else:
+            temp1 = json.loads(message)["data"]["result"]
+            data = json.loads(message)["data"]["result"]["ws"]
+            sn = temp1["sn"]
+            if "rg" in temp1.keys():
+                rep = temp1["rg"]
+                rep_start = rep[0]
+                rep_end = rep[1]
+                for sn in range(rep_start, rep_end + 1):
+                    whole_dict.pop(sn, None)
+                results = ""
+                for i in data:
+                    for w in i["cw"]:
+                        results += w["w"]
+                whole_dict[sn] = results
+            else:
+                results = ""
+                for i in data:
+                    for w in i["cw"]:
+                        results += w["w"]
+                whole_dict[sn] = results
     except Exception as e:
-        print(f"Error during audio processing: {e}")
-    finally:
-        client.close()
-        websocket_thread.join(timeout=5)  # Wait for the thread to finish with a timeout
+        print("receive msg, but parse exception:", e)
 
-    whole_words = "".join(whole_dict[i] for i in sorted(whole_dict.keys()))
-    return whole_words
+def on_error(ws, error):
+    print("### error:", error)
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-def xunfei_asr_with_retry(*args, **kwargs):
-    return xunfei_asr(*args, **kwargs)
+def on_close(ws, a, b):
+    print("### closed ###")
 
-# Usage example
-# result = xunfei_asr_with_retry(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile)
-# print(result)
+def on_open(ws):
+    global wsParam
+
+    def run(*args):
+        frameSize = 8000
+        intervel = 0.04
+        status = STATUS_FIRST_FRAME
+
+        with wave.open(wsParam.AudioFile, "rb") as fp:
+            while True:
+                buf = fp.readframes(frameSize)
+                if not buf:
+                    status = STATUS_LAST_FRAME
+                if status == STATUS_FIRST_FRAME:
+                    d = {"common": wsParam.CommonArgs,
+                         "business": wsParam.BusinessArgs,
+                         "data": {"status": 0, "format": "audio/L16;rate=16000", "audio": str(base64.b64encode(buf), 'utf-8'), "encoding": "raw"}}
+                    d = json.dumps(d)
+                    ws.send(d)
+                    status = STATUS_CONTINUE_FRAME
+                elif status == STATUS_CONTINUE_FRAME:
+                    d = {"data": {"status": 1, "format": "audio/L16;rate=16000",
+                                  "audio": str(base64.b64encode(buf), 'utf-8'),
+                                  "encoding": "raw"}}
+                    ws.send(json.dumps(d))
+                elif status == STATUS_LAST_FRAME:
+                    d = {"data": {"status": 2, "format": "audio/L16;rate=16000",
+                                  "audio": str(base64.b64encode(buf), 'utf-8'),
+                                  "encoding": "raw"}}
+                    ws.send(json.dumps(d))
+                    time.sleep(1)
+                    break
+                time.sleep(intervel)
+        ws.close()
+
+    thread.start_new_thread(run, ())
+
+def xunfei_asr(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile, max_retries=3):
+    global whole_dict
+    global wsParam
+    whole_dict = {}
+    wsParam1 = Ws_Param(APPID=APPID, APISecret=APISecret, APIKey=APIKey, BusinessArgs=BusinessArgsASR, AudioFile=AudioFile)
+    wsParam = wsParam1
+
+    for attempt in range(max_retries):
+        try:
+            websocket.enableTrace(False)
+            wsUrl = wsParam.create_url()
+            ws = websocket.WebSocketApp(wsUrl, on_message=on_message, on_error=on_error, on_close=on_close)
+            ws.on_open = on_open
+            ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+
+            whole_words = ""
+            for i in sorted(whole_dict.keys()):
+                whole_words += whole_dict[i]
+
+            if whole_words:
+                return whole_words
+        except Exception as e:
+            print(f"Attempt {attempt + 1} failed: {e}")
+            time.sleep(2)
+
+    return ""
+
+# 示例调用
+if __name__ == "__main__":
+    APPID = "your_app_id"
+    APIKey = "your_api_key"
+    APISecret = "your_api_secret"
+    BusinessArgsASR = {"domain": "iat", "language": "zh_cn", "accent": "mandarin", "vinfo": 1, "vad_eos": 10000}
+    AudioFile = "path_to_your_audio_file.wav"
+
+    result = xunfei_asr(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile)
+    print(result)

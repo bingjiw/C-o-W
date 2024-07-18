@@ -26,7 +26,7 @@ from common.log import logger
 from common.tmp_dir import TmpDir
 from config import conf
 from voice.voice import Voice
-from .xunfei_asr import xunfei_asr_with_retry
+from .xunfei_asr import xunfei_asr
 from .xunfei_tts import xunfei_tts
 from voice.audio_convert import any_to_mp3
 import shutil
@@ -65,8 +65,8 @@ class XunfeiVoice(Voice):
             #shutil.copy2(voice_file, 'tmp/test1.wav')
             #shutil.copy2(mp3_file, 'tmp/test1.mp3')
             #print("voice and mp3 file",voice_file,mp3_file)
-            text = xunfei_asr_with_retry(self.APPID,self.APISecret,self.APIKey,self.BusinessArgsASR,voice_file)
-            logger.info("讯飞语音识别到了: {}".format(text))
+            text = xunfei_asr(self.APPID,self.APISecret,self.APIKey,self.BusinessArgsASR,voice_file)
+            logger.info("讯飞语音识别结果:“{}”".format(text))
             reply = Reply(ReplyType.TEXT, text)
         except Exception as e:
             logger.warn("XunfeiVoice init failed: %s, ignore " % e)
