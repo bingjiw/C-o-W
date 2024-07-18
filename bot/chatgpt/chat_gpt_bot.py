@@ -19,21 +19,21 @@ from config import conf, load_config
 
 # OpenAI对话模型API (可用)
 class ChatGPTBot(Bot, OpenAIImage):
-    def __init__(self, WhichLLM="BasicLLM"):
+    def __init__(self, Which_LLM_To_Create="BasicLLM"):
         super().__init__()
         # set the default api_key
-        openai.api_key = conf().get(WhichLLM)["open_ai_api_key"]
-        if conf().get(WhichLLM)["open_ai_api_base"]:
-            openai.api_base = conf().get(WhichLLM)["open_ai_api_base"]
+        openai.api_key = conf().get(Which_LLM_To_Create)["open_ai_api_key"]
+        if conf().get(Which_LLM_To_Create)["open_ai_api_base"]:
+            openai.api_base = conf().get(Which_LLM_To_Create)["open_ai_api_base"]
         proxy = conf().get("proxy")
         if proxy:
             openai.proxy = proxy
         if conf().get("rate_limit_chatgpt"):
             self.tb4chatgpt = TokenBucket(conf().get("rate_limit_chatgpt", 20))
 
-        self.sessions = SessionManager(ChatGPTSession, model=conf().get(WhichLLM)["model"] or "gpt-3.5-turbo")
+        self.sessions = SessionManager(ChatGPTSession, model=conf().get(Which_LLM_To_Create)["model"] or "gpt-3.5-turbo")
         self.args = {
-            "model": conf().get(WhichLLM)["model"] or "gpt-3.5-turbo",  # 对话模型的名称
+            "model": conf().get(Which_LLM_To_Create)["model"] or "gpt-3.5-turbo",  # 对话模型的名称
             "temperature": conf().get("temperature", 0.9),  # 值在[0,1]之间，越大表示回复越具有不确定性
             # "max_tokens":4096,  # 回复最大的字符数
             "top_p": conf().get("top_p", 1),

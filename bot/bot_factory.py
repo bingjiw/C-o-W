@@ -19,22 +19,23 @@ def create_bot(bot_type):
 
 
     #炳，基本LLM
-    elif bot_type == "BasicLLM":
+    elif bot_type == "ChatGPTBot.BasicLLM":
         # ChatGPT 网页端web接口
         from bot.chatgpt.chat_gpt_bot import ChatGPTBot
-        return ChatGPTBot(WhichLLM="BasicLLM")
+        return ChatGPTBot("BasicLLM")
     
     #炳，高级LLM
-    elif bot_type == "AdvanLLM":
+    elif bot_type == "ChatGPTBot.AdvanLLM":
         # ChatGPT 网页端web接口
         from bot.chatgpt.chat_gpt_bot import ChatGPTBot
-        return ChatGPTBot(WhichLLM="AdvanLLM")
+        return ChatGPTBot("AdvanLLM")
 
-
+    #原来的代码，不传参数指定，则默认是用 BasicLLM
     elif bot_type == const.CHATGPT:
         # ChatGPT 网页端web接口
         from bot.chatgpt.chat_gpt_bot import ChatGPTBot
         return ChatGPTBot()
+
 
     elif bot_type == const.OPEN_AI:
         # OpenAI 官方对话模型API

@@ -96,9 +96,9 @@ class Bridge(object):
                 # 创建 LINKAI 用的 chat bot
                 self.bots[typename]["LinkAI"] = create_bot(const.LINKAI)
                 # 创建 BasicLLM 用的 CHATGPT chat bot(One-api中再指向 Deepseek-v2, qwen-max 等 高级LLM)
-                self.bots[typename]["BasicLLM"] = create_bot("BasicLLM")
+                self.bots[typename]["BasicLLM"] = create_bot("ChatGPTBot.BasicLLM")
                 # 创建 AdvanLLM 用的 CHATGPT chat bot(One-api中再指向GPT4,4o,claude等 高级LLM)
-                self.bots[typename]["AdvanLLM"] = create_bot("AdvanLLM")
+                self.bots[typename]["AdvanLLM"] = create_bot("ChatGPTBot.AdvanLLM")
                 #
                 logger.debug("《《《《 Bridge().get_bot 函数内：创建3个同时存在的chat bot完成：[ LinkAI, BasicLLM(QWEN_DASHSCOPE), AdvanLLM(chatGPT)(One-api中再指向GPT4,4o,claude等) ]")
                 #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
@@ -134,7 +134,7 @@ class Bridge(object):
         #炳：所以，都要用self.get_bot("chat"), 此函数中若bot还没创建，它会创建
 
         #炳：先用基础LLM 偿试拿 回复
-        context["gpt_model"] = conf()["basic_llm_gpt_model"]
+        context["gpt_model"] = conf().get("BasicLLM")["model"]
         # 🚩🚩调用：基本LLM
         self.the_Bot_I_Want = "BasicLLM"
         BasicReply = self.get_bot("chat").reply(query, context)
@@ -168,7 +168,7 @@ class Bridge(object):
         #炳：基础LLM没发现 不当敏感内容，则 一问二答，再问高级LLM
         else :
             #炳：再用高级LLM拿到回复
-            context["gpt_model"] = conf()["advan_llm_gpt_model"]
+            context["gpt_model"] = conf().get("AdvanLLM")["model"]
             # 🚩🚩调用：高级LLM
             self.the_Bot_I_Want = "AdvanLLM"
             AdvanReply = self.get_bot("chat").reply(query, context)
