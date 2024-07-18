@@ -122,7 +122,6 @@ class WebSocketClient:
         if self.ws:
             self.ws.close()
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 def xunfei_asr(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile):
     global whole_dict
     whole_dict = {}
@@ -172,8 +171,10 @@ def xunfei_asr(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile):
     websocket_thread = threading.Thread(target=run_websocket)
     websocket_thread.start()
 
-    # Wait for WebSocket connection to establish
-    time.sleep(2)
+    # Wait for WebSocket connection to establish with a timeout
+    connection_timeout = 10  # seconds
+    if not client.connected.wait(timeout=connection_timeout):
+        raise Exception(f"WebSocket connection could not be established within {connection_timeout} seconds")
 
     try:
         with wave.open(AudioFile, "rb") as fp:
@@ -207,15 +208,22 @@ def xunfei_asr(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile):
                 status = 1
                 time.sleep(interval)
 
+        # Wait for final processing
+        time.sleep(2)
+
     except Exception as e:
         print(f"Error during audio processing: {e}")
     finally:
         client.close()
-        websocket_thread.join()
+        websocket_thread.join(timeout=5)  # Wait for the thread to finish with a timeout
 
     whole_words = "".join(whole_dict[i] for i in sorted(whole_dict.keys()))
     return whole_words
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+def xunfei_asr_with_retry(*args, **kwargs):
+    return xunfei_asr(*args, **kwargs)
+
 # Usage example
-# result = xunfei_asr(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile)
+# result = xunfei_asr_with_retry(APPID, APISecret, APIKey, BusinessArgsASR, AudioFile)
 # print(result)
