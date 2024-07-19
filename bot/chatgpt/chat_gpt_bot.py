@@ -137,8 +137,12 @@ class ChatGPTBot(Bot, OpenAIImage):
             #
             strResponseText = response.choices[0]["message"]["content"]
             import re
-            cleaned_text = re.sub(r'^> search.*?(?:\n> mclick\(.*?\))?(?:\n> \*\*end-searching\*\*)?|\[.*?\]\(http.*?\)|【\d+†source】', '', strResponseText, flags=re.MULTILINE | re.DOTALL)
-            cleaned_text = re.sub(r'^\s*', '', cleaned_text, flags=re.MULTILINE) #删除：第1次修剪后在文章开头留下一些换行与空格
+            # 删除：正则表达式匹配以 `>` 后面跟随空格和小写字母开头的每一行
+            cleaned_text = re.sub(r'^> [a-z].*$(\n)?', '', strResponseText, flags=re.MULTILINE | re.DOTALL)
+            # 删除：匹配方括号中包含任意内容且紧接着括号内为以 http 或 https 开头的 URL 的模式。
+            cleaned_text = re.sub(r'\[.*?\]\((?:http|https)://\S+\)', '', cleaned_text, flags=re.MULTILINE | re.DOTALL)
+            # 删除：前面修剪后在文章开头留下一些换行与空格
+            cleaned_text = re.sub(r'^\s*', '', cleaned_text, flags=re.MULTILINE) 
             logger.debug("原始啰唆答案：\n{}\n🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚\n修剪后的干净答案：\n{}".format(strResponseText, cleaned_text))
             
             return {
