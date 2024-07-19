@@ -143,10 +143,12 @@ class ChatGPTBot(Bot, OpenAIImage):
             cleaned_text = re.sub(r'\[.*?\]\((?:http|https)://\S+\)', '', cleaned_text)
             # 删除类似 【7†source】 的字串
             cleaned_text = re.sub(r'【\d+†source】', '', cleaned_text)
-            #把  > **end-searching**  替换为🌍
-            cleaned_text = cleaned_text.replace("> **end-searching**\n","🌍")
+            #删除  > **end-searching**
+            cleaned_text = cleaned_text.replace("> **end-searching**\n","")
             # 删除文章开头多余的换行与空格
             cleaned_text = re.sub(r'^\s*', '', cleaned_text, flags=re.MULTILINE)
+            #加🌍，表示 是 搜索得来的
+            cleaned_text = "🌍"+cleaned_text
             logger.debug("原始啰唆答案：\n{}\n🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚\n修剪后的干净答案：\n{}".format(strResponseText, cleaned_text))
             
             return {
