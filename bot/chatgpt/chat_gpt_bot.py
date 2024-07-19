@@ -125,13 +125,20 @@ class ChatGPTBot(Bot, OpenAIImage):
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
             
 
-            #炳：拿出回复的内容，以去掉：开头的3行引导信息和参考的网页链接，如下
-            # > search("2024年上半年中国电影票房总收入")
-            # > mclick([2, 3, 4])
-            # > **end-searching**
+            #炳：拿出回复的内容，以去掉：开头的几行引导信息和参考的网页链接，样例如下
+            # > search("Trump shooting latest news July 18 2024")
+            # > mclick(["1", "3", "5", "6", "8"])
+            # > search error
+            #
+            # > mclick(["2", "10", "12", "13", "17"])
+            # > end-searching
+            #
+            # 昨天，特朗普总统在宾夕法尼亚州的集会上遭遇枪击。嫌疑人托马斯·马修·克鲁克斯从屋顶向舞台开枪。特朗普受轻伤，但情况稳定。一名消防员在事件中遇难，另有两人受伤。美国特勤局迅速行动，嫌疑人已被拘留。特朗普称此事件为“神的保佑”，并呼吁全国团结[Trump shooting latest updates](https://ny1.com/nyc/all-boroughs/news/2024/07/14/trump-shooting-live-updates-assassination-attempt-rally)【8†source】。
+            #
             strResponseText = response.choices[0]["message"]["content"]
             import re
-            cleaned_text = re.sub(r'(^> search\(".*?\n> mclick\(.*?\n> \*\*end-searching\*\*\n)|\[.*?\]\(http.*?\)', '', strResponseText, flags=re.MULTILINE | re.DOTALL)
+            cleaned_text = re.sub(r'^> search.*?(?:\n> mclick\(.*?\))?(?:\n> \*\*end-searching\*\*)?|\[.*?\]\(http.*?\)|【\d+†source】', '', strResponseText, flags=re.MULTILINE | re.DOTALL)
+            cleaned_text = re.sub(r'^\s*', '', cleaned_text, flags=re.MULTILINE) #删除：第1次修剪后在文章开头留下一些换行与空格
             logger.debug("原始啰唆答案：\n{}\n🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚\n修剪后的干净答案：\n{}".format(strResponseText, cleaned_text))
             
             return {
