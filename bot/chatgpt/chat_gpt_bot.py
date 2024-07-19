@@ -123,10 +123,20 @@ class ChatGPTBot(Bot, OpenAIImage):
             response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **args)
             # logger.debug("[CHATGPT] response={}".format(response))
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
+            
+
+            #炳：拿出回复的内容，以去掉：开头的3行引导信息和参考的网页链接，如下
+            # > search("2024年上半年中国电影票房总收入")
+            # > mclick([2, 3, 4])
+            # > **end-searching**
+            strResponseText = response.choices[0]["message"]["content"]
+            import re
+            cleaned_text = re.sub(r'(^> search\(".*?\n> mclick\(.*?\n> \*\*end-searching\*\*\n)|\[.*?\]\(http.*?\)', '', strResponseText, flags=re.MULTILINE | re.DOTALL)
+
             return {
                 "total_tokens": response["usage"]["total_tokens"],
                 "completion_tokens": response["usage"]["completion_tokens"],
-                "content": response.choices[0]["message"]["content"],
+                "content": cleaned_text,
             }
         except Exception as e:
             need_retry = retry_count < 2
