@@ -92,9 +92,9 @@ class Bridge(object):
                 # 初始化 self.bots[typename] 为一个字典
                 self.bots[typename] = {}
                 #
-                # 创建 4 个 chat bot
+                # 创建 几 个 chat bot
                 # 创建 LINKAI 用的 chat bot
-                self.bots[typename]["LinkAI"] = create_bot(const.LINKAI)
+                # 将来用LINKAI识图时 可启用此行 self.bots[typename]["LinkAI"] = create_bot(const.LINKAI)
                 #
                 # 创建 BasicLLM 用的 CHATGPT chat bot(One-api中再指向 Deepseek-v2, qwen-max 等 高级LLM)
                 self.bots[typename]["BasicLLM"] = create_bot("ChatGPTBot.BasicLLM")
@@ -102,10 +102,12 @@ class Bridge(object):
                 # 创建 AdvanLLM 用的 CHATGPT chat bot(One-api中再指向GPT4,4o,claude等 高级LLM)
                 self.bots[typename]["AdvanLLM"] = create_bot("ChatGPTBot.AdvanLLM")
                 #
-                # 自带搜索能力的SearchableLLM: XUNFEI 的 Spark Max
-                self.bots[typename]["SearchableLLM"] = create_bot(const.XUNFEI)
+                # 自带搜索能力的SearchableLLM: XUNFEI 的 Spark Max 》》经试搜索效果不好
+                # self.bots[typename]["SearchableLLM"] = create_bot(const.XUNFEI)
+                # LinkAI充值额度用完后将废弃LINKAI搜索。将来有gpt-4-all等可直接上网搜索答案的LLM
+                self.bots[typename]["SearchableLLM"] = create_bot(const.LINKAI)
                 #
-                logger.debug("《《《《 Bridge().get_bot 函数内：创建4个同时存在的chat bot完成：[ LinkAI, SearchableLLM(XunFei Spark Max), BasicLLM(QWEN_DASHSCOPE), AdvanLLM(chatGPT)(One-api中再指向GPT4,4o,claude等) ]")
+                logger.debug("《《《《 Bridge().get_bot 函数内：创建几个同时存在的chat bot完成：[ LinkAI, BasicLLM(QWEN_DASHSCOPE), AdvanLLM(chatGPT)(One-api中再指向GPT4,4o,claude等) ]")
                 #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
             
             elif typename == "translate":
@@ -155,12 +157,7 @@ class Bridge(object):
         else :
             logger.debug("《《《《 基础LLM 得到回答是“很抱歉...”。需要 上网搜索 找答案")
 
-            """         
-            # 🚩🚩调用：LinkAI 上网搜索（LinkAI充值额度用完后，废弃。将来有gpt-4-all等可直接上网搜索答案的LLM）
-            self.the_Bot_I_Want = "LinkAI"
-            BasicReply = self.get_bot("chat").reply(f"上网搜索：{query}", context)
-             """
-            # 🚩🚩调用：SearchableLLM: XUNFEI 的 Spark Max 上网搜索
+            # 🚩🚩调用：SearchableLLM，这里只需设置为SearchableLLM即可，具体用哪家的在创建bot时设
             self.the_Bot_I_Want = "SearchableLLM"
             BasicReply = self.get_bot("chat").reply(f"上网搜索：{query}", context)            
             # 
