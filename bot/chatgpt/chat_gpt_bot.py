@@ -132,7 +132,8 @@ class ChatGPTBot(Bot, OpenAIImage):
             strResponseText = response.choices[0]["message"]["content"]
             import re
             cleaned_text = re.sub(r'(^> search\(".*?\n> mclick\(.*?\n> \*\*end-searching\*\*\n)|\[.*?\]\(http.*?\)', '', strResponseText, flags=re.MULTILINE | re.DOTALL)
-
+            logger.debug("原始啰唆答案：\n{}\n✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️✂️\n修剪后的干净答案：\n{}".format(strResponseText, cleaned_text))
+            
             return {
                 "total_tokens": response["usage"]["total_tokens"],
                 "completion_tokens": response["usage"]["completion_tokens"],
