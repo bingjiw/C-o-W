@@ -141,6 +141,8 @@ class ChatGPTBot(Bot, OpenAIImage):
             cleaned_text = re.sub(r'^> [a-z].*$', '', strResponseText, flags=re.MULTILINE)
             # 删除带有 URL 的方括号部分
             cleaned_text = re.sub(r'\[.*?\]\((?:http|https)://\S+\)', '', cleaned_text)
+            #把  > **end-searching**  替换为🌍
+            cleaned_text = cleaned_text.replace("> **end-searching**","🌍")
             # 删除文章开头多余的换行与空格
             cleaned_text = re.sub(r'^\s*', '', cleaned_text, flags=re.MULTILINE)
             logger.debug("原始啰唆答案：\n{}\n🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚\n修剪后的干净答案：\n{}".format(strResponseText, cleaned_text))
