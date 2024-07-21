@@ -2,7 +2,11 @@
 
 git pull https://github.com/bingjiw/C-o-W master
 
+
 echo "显示当前正在运行的 C-o-W 进程ID，然后用 kill 进程ID 杀掉"
+
+ps -ef | grep app.py | grep -v grep
+
 pid=$(ps -ef | grep "[a]pp.py" | awk '{print $2}')
 if [ -n "$pid" ]; then
     echo "当前运行的 app.py 进程ID: $pid"
