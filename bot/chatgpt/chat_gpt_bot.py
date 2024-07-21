@@ -120,37 +120,61 @@ class ChatGPTBot(Bot, OpenAIImage):
             # if api_key == None, the default openai.api_key will be used
             if args is None:
                 args = self.args
+
+            # 炳：这句是 真正去调 LLM    
             response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **args)
             # logger.debug("[CHATGPT] response={}".format(response))
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
             
 
+
+            #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+            #如果答案中含有“> **end-searching**”，说明是调gpt-4o产生的啰嗦答案，则要进行修剪
             #炳：拿出回复的内容，以去掉：开头的几行引导信息和参考的网页链接，样例如下
             # > search("Trump shooting latest news July 18 2024")
             # > mclick(["1", "3", "5", "6", "8"])
             # > search error
             #
             # > mclick(["2", "10", "12", "13", "17"])
-            # > end-searching
+            # > **end-searching**
             #
             # 昨天，特朗普总统在宾夕法尼亚州的集会上遭遇枪击。嫌疑人托马斯·马修·克鲁克斯从屋顶向舞台开枪。特朗普受轻伤，但情况稳定。一名消防员在事件中遇难，另有两人受伤。美国特勤局迅速行动，嫌疑人已被拘留。特朗普称此事件为“神的保佑”，并呼吁全国团结[Trump shooting latest updates](https://ny1.com/nyc/all-boroughs/news/2024/07/14/trump-shooting-live-updates-assassination-attempt-rally)【8†source】。
-            #
+            # --------又一例，如下--------
+            # > search("astaxanthin half-life 2024")
+            # > search("current half-life of astaxanthin 2024")
+            # > mclick(["1", "11", "6", "14", "9"])
+            # > mclick([0, 1, 5, 6, 10])
+            # > **end-searching**
+
+            # 根据最新资料，虾青素的
+            # > **end-searching**
+
+            # 半
+            # > **end-searching**
+
+            # 衰期大约为16小时。这意味着在服用后，大约16小时后体内的虾青素浓度会减少一半[New study uncovers astaxanthin's anti-inflammatory potential against lipopolysaccharide-induced inflammation](https://medicalxpress.com/news/2024-05-uncovers-astaxanthin-anti-inflammatory-potential.html)[New Astaxanthin Formulation Said to Provide Ideal, More-Absorbable Dose](https://www.nutritionaloutlook.com/view/new-astaxanthin-formulation-said-provide-ideal-more-absorbable-dose)[Astaxanthin - Wikipedia](https://en.wikipedia.org/wiki/Astaxanthin)。虾青素作为🌍一种🌍脂🌍最新的研究表明，虾青溶素的性半物衰质期大，其约为在16到体20小时内可以。这一持续数据更表长明，时间虾青，素在通常体在内能够血维持清相中对稳定的可浓度检测，到支持其的抗氧时间化和长抗炎达功能72小时[Molecules | Free Full-Text | The Role of Astaxanthin as a Nutraceutical in Health and Age-Related Conditions](https://www.mdpi.com/1420-3049/27/21/7167)[New study uncovers astaxanthin's anti-inflammatory potential against lipopolysaccharide-induced inflammation](https://medicalxpress.com/news/2024-05-uncovers-astaxanthin-anti-inflammatory-potential.html)【7†source】[Evidence-based Analysis on Supplements & Nutrition | Examine](https://examine.com/supplements/astaxanthin/research/)。
+
+            # 。希望这些信息对你有帮助！如果还有其他问题，欢迎继续提问。
+
             strResponseText = response.choices[0]["message"]["content"]
-            import re
-            # 删除以 `>` 后面跟随空格和小写字母开头的每一行
-            cleaned_text = re.sub(r'^> [a-z].*$', '', strResponseText, flags=re.MULTILINE)
-            # 删除带有 URL 的方括号部分
-            cleaned_text = re.sub(r'\[.*?\]\((?:http|https)://\S+\)', '', cleaned_text)
-            # 删除类似 【7†source】 的字串
-            cleaned_text = re.sub(r'【\d+†source】', '', cleaned_text)
-            #删除  > **end-searching**
-            cleaned_text = cleaned_text.replace("> **end-searching**\n","")
-            # 删除文章开头多余的换行与空格
-            cleaned_text = re.sub(r'^\s*', '', cleaned_text, flags=re.MULTILINE)
-            #加🌍，表示 是 搜索得来的
-            cleaned_text = "🌍"+cleaned_text
-            logger.debug("原始啰唆答案：\n{}\n🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚\n修剪后的干净答案：\n{}".format(strResponseText, cleaned_text))
-            
+            if "> **end-searching**" in strResponseText:
+                import re
+                # 删除以 `>` 后面跟随空格和小写字母开头的每一行
+                cleaned_text = re.sub(r'^> [a-z].*$', '', strResponseText, flags=re.MULTILINE)
+                # 删除带有 URL 的方括号部分
+                cleaned_text = re.sub(r'\[.*?\]\((?:http|https)://\S+\)', '', cleaned_text)
+                # 删除类似 【7†source】 的字串
+                cleaned_text = re.sub(r'【\d+†source】', '', cleaned_text)
+                #删除  > **end-searching**
+                cleaned_text = cleaned_text.replace("> **end-searching**\n","")
+                # 删除文章开头多余的换行与空格
+                cleaned_text = re.sub(r'^\s*', '', cleaned_text, flags=re.MULTILINE)
+                #加🌐，表示 是 gpt-4o搜索得来的，故意与LINKAI的地球不同样子
+                cleaned_text = "🌐"+cleaned_text
+                logger.debug("原始啰唆答案：\n{}\n🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚🪚\n修剪后的干净答案：\n{}".format(strResponseText, cleaned_text))
+            else:
+                cleaned_text = strResponseText
+
             return {
                 "total_tokens": response["usage"]["total_tokens"],
                 "completion_tokens": response["usage"]["completion_tokens"],
