@@ -486,9 +486,14 @@ def check_prefix(content, prefix_list):
 
 
 def check_contain(content, keyword_list):
+    if content is None:
+        return None
+    
     if not keyword_list:
         return None
+    
     for ky in keyword_list:
         if content.find(ky) != -1:
             return True
+    
     return None
