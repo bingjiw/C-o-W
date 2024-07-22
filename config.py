@@ -16,13 +16,15 @@ available_setting = {
     "BasicLLM": {
         "open_ai_api_key": "sk---------", 
         "open_ai_api_base": "http://127.0.0.1:3000/v1", 
-        "model": "qwen-max"
+        "model": "qwen-max",
+        "system_prompt": "要不同的系统提示词来针对不同的大模型的特点来设置"
     },
 
     "AdvanLLM": {
         "open_ai_api_key": "sk---------", 
         "open_ai_api_base": "http://127.0.0.1:3000/v1", 
-        "model": "gpt-4o"
+        "model": "gpt-4o",
+        "system_prompt": "要不同的系统提示词来针对不同的大模型的特点来设置"
     },
 
     # 迅飞是通过以下URL来确定调哪个模型的

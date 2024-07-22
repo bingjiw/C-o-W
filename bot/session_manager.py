@@ -49,6 +49,7 @@ class SessionManager(object):
         self.sessioncls = sessioncls
         self.session_args = session_args
 
+    #炳注：其实叫get_session更合适，因如果session_id已存在，则返回此session对象，并没创建新的
     def build_session(self, session_id, system_prompt=None):
         """
         如果session_id不在sessions中，创建一个新的session并添加到sessions中

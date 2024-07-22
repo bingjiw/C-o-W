@@ -1,6 +1,7 @@
 from bot.session_manager import Session
 from common.log import logger
 from common import const
+from config import conf
 
 """
     e.g.  [
@@ -14,6 +15,13 @@ from common import const
 
 class ChatGPTSession(Session):
     def __init__(self, session_id, system_prompt=None, model="gpt-3.5-turbo"):
+        
+        #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+        #炳：若是BasicLLM、AdvanLLM则拿各自特定的system_prompt
+        if model in ["BasicLLM", "AdvanLLM"]:
+            system_prompt = conf().get(model)["system_prompt"]
+        #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
         super().__init__(session_id, system_prompt)
         self.model = model
         self.reset()

@@ -69,7 +69,7 @@ def calculate_length_tendency(text):
 # 根据AI回复的文本 判断决定需不需要实时搜索
 def analyze_text_features__need_search(text):
     
-    if text is not None and "我要上网查询后才能回答" in text and text.index("我要上网查询后才能回答") <= 99 :
+    if text is not None and "我要上网查询后才能回答" in text and text.index("我要上网查询后才能回答") <= 399 :
         return "LLM已明确表示：【我要上网查询后才能回答】", 99999
 
     matched_apologies = contains_apology(text)
