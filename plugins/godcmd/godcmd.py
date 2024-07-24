@@ -278,7 +278,7 @@ class Godcmd(Plugin):
                             ok, result = True, "模型设置为: " + str(model)
                 elif cmd == "id":
                     ok, result = True, user
-                elif cmd == "set_openai_api_key":
+                elif cmd == "炳禁客自设set_openai_api_key":
                     if len(args) == 1:
                         user_data = conf().get_user_data(user)
                         user_data["openai_api_key"] = args[0]
@@ -292,7 +292,7 @@ class Godcmd(Plugin):
                         ok, result = True, "你的OpenAI私有api_key已清除"
                     except Exception as e:
                         ok, result = False, "你没有设置私有api_key"
-                elif cmd == "set_gpt_model":
+                elif cmd == "炳禁客自设set_gpt_model":
                     if len(args) == 1:
                         user_data = conf().get_user_data(user)
                         user_data["gpt_model"] = args[0]

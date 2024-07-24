@@ -63,6 +63,16 @@ class ChatChannel(Channel):
             config = conf()
             cmsg = context["msg"]
             user_data = conf().get_user_data(cmsg.from_user_id)
+
+            ###############
+            #炳：给每个用户一个以他的自己的ID作为令牌，取其ID的前11个字符
+            #from_user_id=@e7a3951a75b5320ccc9ecb34a3bea3627b178951868257504ff4c27e6e1c6d80,
+            # 取字符串的前11个字符，包括@共11个。否则太长了. 即使字符串 s 只有5个字符，使用 s[:11] 也不会出错，而是返回整个字符串。
+            # 原本user_data中的api_key是只在Godcmd插件中设置的
+            first_11_chars = cmsg.from_user_id[:11]
+            user_data["openai_api_key"] = first_11_chars
+            ###############
+
             context["openai_api_key"] = user_data.get("openai_api_key")
             context["gpt_model"] = user_data.get("gpt_model")
             if context.get("isgroup", False):
