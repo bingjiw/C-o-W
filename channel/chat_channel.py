@@ -74,6 +74,7 @@ class ChatChannel(Channel):
             ###############
 
             context["openai_api_key"] = user_data.get("openai_api_key")
+            
             context["gpt_model"] = user_data.get("gpt_model")
             if context.get("isgroup", False):
                 group_name = cmsg.other_user_nickname
@@ -190,7 +191,7 @@ class ChatChannel(Channel):
         if context is None or not context.content:
             return
 
-        logger.debug("现执行到了 chat_channel.py - _handle 函数中 ready to handle context值={}".format(context))
+        logger.debug("现执行到了 chat_channel.py - _handle 函数中 ready to handle context值=【{}】 补充输出context[“msg”]=【{}】".format(context, context["msg"]))
       
 
         #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV

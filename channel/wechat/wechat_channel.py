@@ -171,7 +171,9 @@ class WechatChannel(ChatChannel):
         if cmsg.ctype == ContextType.VOICE:
             if conf().get("speech_recognition") != True:
                 return
-            logger.debug("[WX]receive voice msg: {}".format(cmsg.content))
+            #logger.debug("[WX]receive voice msg: {}".format(cmsg.content))
+            #炳：原上句日志输出的消息太简单，改成下面这样更详细的输出
+            logger.debug("[WX]微信收到语音消息:【{}】, cmsg=【{}】".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
         elif cmsg.ctype == ContextType.IMAGE:
             logger.debug("[WX]receive image msg: {}".format(cmsg.content))
         elif cmsg.ctype == ContextType.PATPAT:
