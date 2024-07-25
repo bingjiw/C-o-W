@@ -141,63 +141,75 @@ class Bridge(object):
         #炳：本函数中 用 self.bots["chat"]["BasicLLM"] 会出错，因为self.bots["chat"]还没创建
         #炳：所以，都要用self.get_bot("chat"), 此函数中若bot还没创建，它会创建
 
-        #炳：先用基础LLM 偿试拿 回复
-        context["gpt_model"] = conf().get("BasicLLM")["model"]
-        # 🚩🚩调用：基本LLM
-        self.the_Bot_I_Want = "BasicLLM"
-        BasicReply = self.get_bot("chat").reply(query, context)
-
-        text = None if BasicReply is None else BasicReply.content
-        analyze_result_string, final_score = analyze_text_features__need_search(text)
-        logger.debug("\n" + analyze_result_string)
-        
-        # analyze_text_features__need_search 如果 need_search 结果值较小，则不需要再 上网实时搜索
-        # 3.5 这个“及格分数线” 是拿多十多个回复测试后，得到的一个较好的 分界值
-        if final_score < 3.5 :
-            logger.debug("《《《《 基础LLM 已得到答案。不用上网搜索。")
-            needOnlineSearch = False
-            strQuerySendToLinkAI = f"{query}"
-        else :
-            logger.debug("《《《《 基础LLM 的知识库无答案。需要 上网🌎搜索 找答案")
-            needOnlineSearch = True
-            strQuerySendToLinkAI = f"上网搜索：{query}"
-
         #如果3分钟内有上传过图片，则认为需要识图
         needRecognizeImage = memory.USER_IMAGE_CACHE.get( context["session_id"] ) is not None
 
-        #如果需要搜索或需要识图（3分钟内有上传过图片），则用LINKAI机器人
-        if needOnlineSearch or needRecognizeImage :
+        #如果需要识图，就不用特地问基础LLM并判断要不要上网找答案
+        if needRecognizeImage :
             # 🚩🚩调用：LinkAI
             self.the_Bot_I_Want = "LinkAI"
-            BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)            
-
-        if needOnlineSearch :
-            logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🌎说明这是互联网实时搜索得来的回答")
-            BasicReply.content = "🌎" + BasicReply.content 
-
-        if needRecognizeImage :
+            strQuerySendToLinkAI = f"参考上传的图片。{query}"
+            #因LINKAI自带搜索，所以识图的时候 应该也能上网搜索的。
+            BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)        
+            #
             logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🖼️说明需要识图（3分钟内有上传过图片）")
             BasicReply.content = "🖼️" + BasicReply.content 
 
+        else ：
+
+            #不用识图，则先问基础LLM，再根据回答决定要不要上网搜索。
+            #炳：先用基础LLM 偿试拿 回复
+            context["gpt_model"] = conf().get("BasicLLM")["model"]
+            # 🚩🚩调用：基本LLM
+            self.the_Bot_I_Want = "BasicLLM"
+            BasicReply = self.get_bot("chat").reply(query, context)
+
+            text = None if BasicReply is None else BasicReply.content
+            analyze_result_string, final_score = analyze_text_features__need_search(text)
+            logger.debug("\n" + analyze_result_string)
+                
+            # analyze_text_features__need_search 如果 need_search 结果值较小，则不需要再 上网实时搜索
+            # 3.5 这个“及格分数线” 是拿多十多个回复测试后，得到的一个较好的 分界值
+            if final_score < 3.5 :
+                logger.debug("《《《《 基础LLM 已得到答案。不用上网搜索。")
+                needOnlineSearch = False
+                strQuerySendToLinkAI = f"{query}"
+            else :
+                logger.debug("《《《《 基础LLM 的知识库无答案。需要 上网🌎搜索 找答案")
+                needOnlineSearch = True
+                strQuerySendToLinkAI = f"上网搜索：{query}"
+
+            #如果需要搜索，则用LINKAI机器人
+            if needOnlineSearch :
+                # 🚩🚩调用：LinkAI
+                self.the_Bot_I_Want = "LinkAI"
+                BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)            
+                #
+                logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🌎说明这是互联网实时搜索得来的回答")
+                BasicReply.content = "🌎" + BasicReply.content 
 
         # 到此，基础LLM 肯定已得到答案
 
-        #炳：如果 基础LLM 返回说有：不当敏感内容
+        #炳：如果 基础LLM 返回说有：不当敏感内容（图片也有可能会导致LLM产生色情或政治的敏感内容的答案）
         if "data may contain inappropriate content" in BasicReply.content :
             strWarning = conf().get("warning_reply_for_inappropriate_content")
             BasicReply.content = f"{BasicReply.content}\n\n{strWarning}"
 
         #炳：基础LLM没发现 不当敏感内容，则 一问二答，再问高级LLM
         else :
-            #炳：再用高级LLM拿到回复
-            context["gpt_model"] = conf().get("AdvanLLM")["model"]
-            # 🚩🚩调用：高级LLM
-            self.the_Bot_I_Want = "AdvanLLM"
-            AdvanReply = self.get_bot("chat").reply(query, context)
+            if needRecognizeImage :
+                #炳：当前图片识别模式中（3分钟内上传过图片）暂不支持一问双答，3分钟后恢复一问双答
+                BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽当前图片识别模式中（3分钟内上传过图片）暂不支持一问双答，3分钟后会自动恢复一问双答功能"
+            else :
+                #炳：再用高级LLM拿到回复
+                context["gpt_model"] = conf().get("AdvanLLM")["model"]
+                # 🚩🚩调用：高级LLM
+                self.the_Bot_I_Want = "AdvanLLM"
+                AdvanReply = self.get_bot("chat").reply(query, context)
 
-            #炳：合并2个回复 到一个回复中
-            BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽{AdvanReply.content}"
-        
+                #炳：合并2个回复 到一个回复中
+                BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽{AdvanReply.content}"
+            
         return BasicReply
 
 

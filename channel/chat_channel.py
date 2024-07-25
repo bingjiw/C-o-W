@@ -295,7 +295,7 @@ class ChatChannel(Channel):
                 #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
                 #炳：应在这里跟用户说“收到图片，可在3分钟内问询与图片相关的问题”
                 context["channel"] = e_context["channel"]
-                reply = Reply(ReplyType.TEXT, "【收到图片🖼️，可在3分钟内问询与图片相关的问题】")
+                reply = Reply(ReplyType.TEXT, "🖼️收到图片，可在3分钟内询问与图片相关的问题")
                 #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 
