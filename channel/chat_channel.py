@@ -381,7 +381,8 @@ class ChatChannel(Channel):
                         reply_text = conf().get("single_chat_reply_prefix", "") + reply_text + conf().get("single_chat_reply_suffix", "")
                     
                     #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
-                    # 只在回答内容大于200字时，才附加提示
+                    # 只在回答内容大于200字时，才附加提示。
+                    # 若本就很短的有用回复，超50%都是添加的广告提示，会显得很啰嗦烦人
                     if len(reply_text) > 200 :
                         # 使用函数 安全地获取 随机提示
                         hint = get_safe_random_hint(conf)
