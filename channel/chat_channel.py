@@ -294,8 +294,10 @@ class ChatChannel(Channel):
 
                 #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
                 #炳：应在这里跟用户说“收到图片，可在3分钟内问询与图片相关的问题”
-                context["channel"] = e_context["channel"]
-                reply = Reply(ReplyType.TEXT, "🖼️收到一张图片，你现在可以问与此图片相关的问题（可一次问多个问题）")
+                #   如果是  单聊（不是群聊）  才说 “收到一张图片。。。
+                if not context.get("isgroup", False) :
+                    context["channel"] = e_context["channel"]
+                    reply = Reply(ReplyType.TEXT, "🖼️收到一张图片，你现在可以问与此图片相关的问题（可一次问多个问题）")
                 #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 
