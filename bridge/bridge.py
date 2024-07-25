@@ -13,7 +13,7 @@ from config import conf
 from translate.factory import create_translator
 from voice.factory import create_voice
 from common import memory
-from bot import ChatGPTBot
+from bot.chatgpt.chat_gpt_bot import ChatGPTBot 
 
 @singleton
 class Bridge(object):
