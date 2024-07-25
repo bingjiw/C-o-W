@@ -287,18 +287,26 @@ class ChatChannel(Channel):
                     else:
                         return
             elif context.type == ContextType.IMAGE:  # 图片消息，当前仅做下载保存到本地的逻辑
-                memory.USER_IMAGE_CACHE[context["session_id"]] = {
-                    "path": context.content,
-                    "msg": context.get("msg")
-                }
 
+                
                 #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
                 #炳：应在这里跟用户说“收到图片，可在3分钟内问询与图片相关的问题”
                 #   如果是  单聊（不是群聊）  才说 “收到一张图片。。。
                 if not context.get("isgroup", False) :
                     context["channel"] = e_context["channel"]
-                    reply = Reply(ReplyType.TEXT, "🖼️收到一张图片，你现在可以问与此图片相关的问题（可一次问多个问题）")
+                    #如果上一张图还没有问答处理掉，又来一张图（一次发了多张图）
+                    if (memory.USER_IMAGE_CACHE[context["session_id"]] is not None) :
+                        reply = Reply(ReplyType.TEXT, "🖼️虽然收到多张图片，但只能针对最后一张图片提问（不要连续发多张图片。请发一张问一张）")
+                    else :
+                        reply = Reply(ReplyType.TEXT, "🖼️收到一张图片，你现在可以问与此图片相关的问题（可一次问多个问题）")
                 #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+                # 无论是单聊 还是 群聊 都把图片存好记下
+                memory.USER_IMAGE_CACHE[context["session_id"]] = {
+                    "path": context.content,
+                    "msg": context.get("msg")
+                }
+
 
 
             elif context.type == ContextType.SHARING:  # 分享信息，当前无默认逻辑
