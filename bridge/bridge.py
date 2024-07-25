@@ -145,11 +145,11 @@ class Bridge(object):
         #如果3分钟内有上传过图片，则认为需要识图
         needRecognizeImage = memory.USER_IMAGE_CACHE.get( context["session_id"] ) is not None
 
-        #如果需要识图，就不用特地问基础LLM并判断要不要上网找答案
+        #如果需要识图（那么就不用特地问基础LLM并判断要不要上网找答案了）
         if needRecognizeImage :
             # 🚩🚩调用：LinkAI
             self.the_Bot_I_Want = "LinkAI"
-            strQuerySendToLinkAI = f"参考上传的图片。{query}"
+            strQuerySendToLinkAI = f"详细描述这张图片，说出图中所有细节。参考此图回答问题：{query}"
             #因LINKAI自带搜索，所以识图的时候 应该也能上网搜索的。
             BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)        
             #
