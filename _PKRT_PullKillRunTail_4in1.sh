@@ -37,5 +37,6 @@ echo "启动 C-o-W 的 app.py，微信要扫的二维码用 _TAIL.sh 查看"
 nohup python3 app.py > output.log 2>&1 &
 disown
 
-cat output.log
-tail -f output.log
+#如果执行下面的命令，会导致 control+C 按键中止 app.py，所以不要执行下面的命令，手动输入 ./_TAIL.sh 吧
+#cat output.log
+#tail -f output.log
