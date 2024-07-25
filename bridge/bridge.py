@@ -149,7 +149,7 @@ class Bridge(object):
         if needRecognizeImage :
             # 🚩🚩调用：LinkAI
             self.the_Bot_I_Want = "LinkAI"
-            strQuerySendToLinkAI = f"先描述这张图片整体，再一一描述图片中的所有细节。图中如有人物，再分析人物的行为、表情、面容、体态、种族、年纪、服饰等，并推测图中人物的心情、想法、意图。最后参考此图回答问题：{query}"
+            strQuerySendToLinkAI = f"先描述这张图片整体，再一一描述图片中的所有细节。图中如有文字，写出所有文字。图中如有人物，则分析人物的动作、表情、面容、体态、年纪、服饰、心情。最后参考此图回答问题：{query}"
             #因LINKAI自带搜索，所以识图的时候 应该也能上网搜索的。
             BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)        
             #
@@ -213,10 +213,9 @@ class Bridge(object):
                 AdvanBot = self.get_bot("chat")
                 AdvanBot.sessions.session_reply(BasicReply.content, context["session_id"])
                 logger.debug("把图像识别的结果答案也给AdvanLLM的Session知道一下,以便后面顺畅自然的问答")
-                
-                #炳：当前图片识别模式中（3分钟内上传过图片）暂不支持一问双答，3分钟后恢复一问双答
-                #简洁一点吧，不给最终用户发这些：  BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽当前图片识别模式中（3分钟内发过图片给我）暂不支持一问双答，下一次问答时会自动恢复一问双答功能"
-                
+                strQueryToLLM = f"根据刚才描述图片的文字，回答问题：{query}"
+            else :
+                strQueryToLLM = query
         
             #炳：再用高级LLM拿到回复，
             # 因得到了识图的文字答案，所以AdvanLLM也能仅通过识图的答案文字来回答用户的问题 
@@ -224,7 +223,7 @@ class Bridge(object):
             context["gpt_model"] = conf().get("AdvanLLM")["model"]
             # 🚩🚩调用：高级LLM
             self.the_Bot_I_Want = "AdvanLLM"
-            AdvanReply = self.get_bot("chat").reply(query, context)
+            AdvanReply = self.get_bot("chat").reply(strQueryToLLM, context)
 
             #炳：合并2个回复 到一个回复中
             BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽{AdvanReply.content}"
