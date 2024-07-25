@@ -295,7 +295,7 @@ class ChatChannel(Channel):
                 if not context.get("isgroup", False) :
                     context["channel"] = e_context["channel"]
                     #如果上一张图还没有问答处理掉，又来一张图（一次发了多张图）
-                    if (memory.USER_IMAGE_CACHE[context["session_id"]] is not None) :
+                    if memory.USER_IMAGE_CACHE.get(context["session_id"]) is not None:
                         reply = Reply(ReplyType.TEXT, "🖼️虽然收到多张图片，但只能针对最后一张图片提问（不要连续发多张图片。请发一张问一张）")
                     else :
                         reply = Reply(ReplyType.TEXT, "🖼️收到一张图片，你现在可以问与此图片相关的问题（可一次问多个问题）")
