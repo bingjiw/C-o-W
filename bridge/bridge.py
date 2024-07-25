@@ -204,13 +204,15 @@ class Bridge(object):
             if needRecognizeImage or needOnlineSearch :                               #不能用这句来判断，因为get_bot后会马上把这个变量改为BasicLLM    if self.the_Bot_I_Want == "LinkAI" :
                 self.the_Bot_I_Want = "BasicLLM"
                 BasicBot = self.get_bot("chat")
-                BasicBot.sessions.session_reply(BasicReply.content, context["session_id"])               
+                BasicBot.sessions.session_reply(BasicReply.content, context["session_id"])    
+                logger.debug("把LINKAI的最近添加的session中的内容copy给BasicLLM一份。这样 BasicLLM的Session 也能知道【搜索】或【问图】的结果内容, 下次问答时就能用到。")
 
             if needRecognizeImage :
                 #把图像识别的内容也给AdvanLLM的Session知道一下,以便后面顺畅自然的问答
                 self.the_Bot_I_Want = "AdvanLLM"
                 AdvanBot = self.get_bot("chat")
                 AdvanBot.sessions.session_reply(BasicReply.content, context["session_id"])
+                logger.debug("把图像识别的内容也给AdvanLLM的Session知道一下,以便后面顺畅自然的问答")
                 
                 #炳：当前图片识别模式中（3分钟内上传过图片）暂不支持一问双答，3分钟后恢复一问双答
                 #简洁一点吧，不给最终用户发这些：  BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽当前图片识别模式中（3分钟内发过图片给我）暂不支持一问双答，下一次问答时会自动恢复一问双答功能"
