@@ -44,6 +44,7 @@ class LinkAIBot(Bot):
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
 
+
     def _chat(self, query, context, retry_count=0) -> Reply:
         """
         发起对话请求
@@ -52,6 +53,26 @@ class LinkAIBot(Bot):
         :param retry_count: 当前递归重试次数
         :return: 回复
         """
+
+
+        #炳：加一个子函数，用于避免在日志中记录很长的base64图片数据,可以对日志内容进行剪截处理
+        # 这段代码定义了一个truncate_base64函数,它会:
+        # 使用正则表达式查找base64编码的图片数据。
+        # 如果找到,它会保留MIME类型前缀(如data:image/png;base64,),但将实际的base64数据截断到指定的最大长度(默认50个字符),并在末尾添加省略号。
+        # 如果base64数据短于最大长度,则保持不变。
+        def truncate_base64(log_message, max_length=50):
+            pattern = r'(data:image/[^;]+;base64,)([a-zA-Z0-9+/]+=*)'
+            
+            def replace_base64(match):
+                prefix, base64_data = match.groups()
+                if len(base64_data) > max_length:
+                    return f"{prefix}{base64_data[:max_length]}..."
+                return f"{prefix}{base64_data}"
+            
+            return re.sub(pattern, replace_base64, log_message)
+
+
+
         if retry_count > 2:
             # exit from retry 2 times
             logger.warn("[LINKAI] failed after maximum number of retry times")
@@ -123,8 +144,8 @@ class LinkAIBot(Bot):
             logger.info(f"[LINKAI] query={query}, app_code={app_code}, model={body.get('model')}, file_id={file_id}")
             headers = {"Authorization": "Bearer " + linkai_api_key}
 
-            #炳 把log移到这里，用于记入真正发到LinkAI的内容
-            logger.debug(f"真正发到LinkAI的内容：json_body={body}, headers={headers}, session={session_message}, session_id={session_id}")
+            #炳 把log移到这里，用于记录真正发到LinkAI的内容
+            logger.debug(f"真正发到LinkAI的内容：json_body={truncate_base64(str(body))}, headers={headers}, session={session_message}, session_id={session_id}")
 
             # do http request
             base_url = conf().get("linkai_api_base", "https://api.link-ai.tech")
