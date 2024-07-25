@@ -200,14 +200,14 @@ class Bridge(object):
         else :
 
             # 如果用过LINKAI，就把LINKAI的最近添加的session中的内容copy给BasicLLM一份。
-            # 这样 BasicLLM 也能知道【搜索】或【问图】的结果内容, 下次问答时就能用到
+            # 这样 BasicLLM的Session 也能知道【搜索】或【问图】的结果内容, 下次问答时就能用到
             if needRecognizeImage or needOnlineSearch :                               #不能用这句来判断，因为get_bot后会马上把这个变量改为BasicLLM    if self.the_Bot_I_Want == "LinkAI" :
                 self.the_Bot_I_Want = "BasicLLM"
                 BasicBot = self.get_bot("chat")
                 BasicBot.sessions.session_reply(BasicReply.content, context["session_id"])               
 
             if needRecognizeImage :
-                #把图像识别的内容也给AdvanLLM知道一下
+                #把图像识别的内容也给AdvanLLM的Session知道一下,以便后面顺畅自然的问答
                 self.the_Bot_I_Want = "AdvanLLM"
                 AdvanBot = self.get_bot("chat")
                 AdvanBot.sessions.session_reply(BasicReply.content, context["session_id"])
