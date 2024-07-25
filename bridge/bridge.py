@@ -149,7 +149,7 @@ class Bridge(object):
         if needRecognizeImage :
             # 🚩🚩调用：LinkAI
             self.the_Bot_I_Want = "LinkAI"
-            strQuerySendToLinkAI = f"详细描述这张图片，说出图中所有细节。参考此图回答问题：{query}"
+            strQuerySendToLinkAI = f"先描述这张图片整体，再一一描述图片中的所有细节。图中如有人物，再分析人物的行为、表情、面容、体态、种族、年纪、服饰等，并推测图中人物的心情、想法、意图。最后参考此图回答问题：{query}"
             #因LINKAI自带搜索，所以识图的时候 应该也能上网搜索的。
             BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)        
             #
@@ -217,16 +217,18 @@ class Bridge(object):
                 #炳：当前图片识别模式中（3分钟内上传过图片）暂不支持一问双答，3分钟后恢复一问双答
                 #简洁一点吧，不给最终用户发这些：  BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽当前图片识别模式中（3分钟内发过图片给我）暂不支持一问双答，下一次问答时会自动恢复一问双答功能"
                 
-            else :
-                #炳：再用高级LLM拿到回复
-                context["gpt_model"] = conf().get("AdvanLLM")["model"]
-                # 🚩🚩调用：高级LLM
-                self.the_Bot_I_Want = "AdvanLLM"
-                AdvanReply = self.get_bot("chat").reply(query, context)
+        
+            #炳：再用高级LLM拿到回复，
+            # 因得到了识图的文字答案，所以AdvanLLM也能仅通过识图的答案文字来回答用户的问题 
+            # (看不到图，仅通过听到对图的描述 来“盲答”用户的问题)
+            context["gpt_model"] = conf().get("AdvanLLM")["model"]
+            # 🚩🚩调用：高级LLM
+            self.the_Bot_I_Want = "AdvanLLM"
+            AdvanReply = self.get_bot("chat").reply(query, context)
 
-                #炳：合并2个回复 到一个回复中
-                BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽{AdvanReply.content}"
-            
+            #炳：合并2个回复 到一个回复中
+            BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽{AdvanReply.content}"
+        
         return BasicReply
 
 
