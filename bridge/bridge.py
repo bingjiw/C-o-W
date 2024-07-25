@@ -199,7 +199,7 @@ class Bridge(object):
         else :
             if needRecognizeImage :
                 #炳：当前图片识别模式中（3分钟内上传过图片）暂不支持一问双答，3分钟后恢复一问双答
-                BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽当前图片识别模式中（3分钟内上传过图片）暂不支持一问双答，3分钟后会自动恢复一问双答功能"
+                BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽当前图片识别模式中（3分钟内发过图片给我）暂不支持一问双答，下一次问答时会自动恢复一问双答功能"
             else :
                 #炳：再用高级LLM拿到回复
                 context["gpt_model"] = conf().get("AdvanLLM")["model"]

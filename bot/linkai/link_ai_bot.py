@@ -145,7 +145,7 @@ class LinkAIBot(Bot):
             headers = {"Authorization": "Bearer " + linkai_api_key}
 
             #炳 把log移到这里，用于记录真正发到LinkAI的内容
-            logger.debug(f"真正发到LinkAI的内容：json_body={truncate_base64(str(body))}, headers={headers}, session={session_message}, session_id={session_id}")
+            logger.debug(f"真正发到LinkAI的内容：json_body={truncate_base64(str(body))}, headers={headers}, session={truncate_base64(str(session_message))}, session_id={session_id}")
 
             # do http request
             base_url = conf().get("linkai_api_base", "https://api.link-ai.tech")
