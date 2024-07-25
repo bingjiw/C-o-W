@@ -291,6 +291,14 @@ class ChatChannel(Channel):
                     "path": context.content,
                     "msg": context.get("msg")
                 }
+
+                #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+                #炳：应在这里跟用户说“收到图片，可在3分钟内问询与图片相关的问题”
+                context["channel"] = e_context["channel"]
+                reply = Reply(ReplyType.TEXT, "【收到图片🖼️，可在3分钟内问询与图片相关的问题】")
+                #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+
             elif context.type == ContextType.SHARING:  # 分享信息，当前无默认逻辑
                 pass
             elif context.type == ContextType.FUNCTION or context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑

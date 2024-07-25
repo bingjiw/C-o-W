@@ -12,7 +12,7 @@ from common.singleton import singleton
 from config import conf
 from translate.factory import create_translator
 from voice.factory import create_voice
-
+from common import memory
 
 @singleton
 class Bridge(object):
@@ -94,7 +94,6 @@ class Bridge(object):
                 #
                 # 创建 几 个 chat bot
                 # 创建 LINKAI 用的 chat bot
-                # 将来用LINKAI识图时 可启用此行 self.bots[typename]["LinkAI"] = create_bot(const.LINKAI)
                 #
                 # 创建 BasicLLM 用的 CHATGPT chat bot(One-api中再指向 Deepseek-v2, qwen-max 等 高级LLM)
                 self.bots[typename]["BasicLLM"] = create_bot("ChatGPTBot.BasicLLM")
@@ -105,7 +104,9 @@ class Bridge(object):
                 # 自带搜索能力的SearchableLLM: XUNFEI 的 Spark Max 》》经试搜索效果不好
                 # self.bots[typename]["SearchableLLM"] = create_bot(const.XUNFEI)
                 # LinkAI充值额度用完后将废弃LINKAI搜索。将来有gpt-4-all等可直接上网搜索答案的LLM
-                self.bots[typename]["SearchableLLM"] = create_bot(const.LINKAI)
+                #self.bots[typename]["SearchableLLM"] = create_bot(const.LINKAI)
+                # 【识图】和【搜索】共用同一个LINKAI bot
+                self.bots[typename]["LinkAI"] = create_bot(const.LINKAI)
                 #
                 logger.debug("《《《《 Bridge().get_bot 函数内：创建几个同时存在的chat bot完成：[ LinkAI, BasicLLM(QWEN_DASHSCOPE), AdvanLLM(chatGPT)(One-api中再指向GPT4,4o,claude等) ]")
                 #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
@@ -153,16 +154,30 @@ class Bridge(object):
         # analyze_text_features__need_search 如果 need_search 结果值较小，则不需要再 上网实时搜索
         # 3.5 这个“及格分数线” 是拿多十多个回复测试后，得到的一个较好的 分界值
         if final_score < 3.5 :
-            logger.debug("《《《《 基础LLM 已得到答案。不需要 上网搜索 找答案")
+            logger.debug("《《《《 基础LLM 已得到答案。不用上网搜索。")
+            needOnlineSearch = False
+            strQuerySendToLinkAI = f"{query}"
         else :
-            logger.debug("《《《《 基础LLM 得到回答是“很抱歉...”。需要 上网搜索 找答案")
+            logger.debug("《《《《 基础LLM 的知识库无答案。需要 上网🌎搜索 找答案")
+            needOnlineSearch = True
+            strQuerySendToLinkAI = f"上网搜索：{query}"
 
-            # 🚩🚩调用：SearchableLLM，这里只需设置为SearchableLLM即可，具体用哪家的在创建bot时设
-            self.the_Bot_I_Want = "SearchableLLM"
-            BasicReply = self.get_bot("chat").reply(f"上网搜索：{query}", context)            
-            # 
+        #如果3分钟内有上传过图片，则认为需要识图
+        needRecognizeImage = memory.USER_IMAGE_CACHE.get( context["session_id"] ) is not None
+
+        #如果需要搜索或需要识图（3分钟内有上传过图片），则用LINKAI机器人
+        if needOnlineSearch or needRecognizeImage :
+            # 🚩🚩调用：LinkAI
+            self.the_Bot_I_Want = "LinkAI"
+            BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)            
+
+        if needOnlineSearch :
             logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🌎说明这是互联网实时搜索得来的回答")
             BasicReply.content = "🌎" + BasicReply.content 
+
+        if needRecognizeImage :
+            logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🖼️说明需要识图（3分钟内有上传过图片）")
+            BasicReply.content = "🖼️" + BasicReply.content 
 
 
         # 到此，基础LLM 肯定已得到答案
