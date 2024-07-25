@@ -13,6 +13,7 @@ from config import conf
 from translate.factory import create_translator
 from voice.factory import create_voice
 from common import memory
+from bot import ChatGPTBot
 
 @singleton
 class Bridge(object):
@@ -197,9 +198,23 @@ class Bridge(object):
 
         #炳：基础LLM没发现 不当敏感内容，则 一问二答，再问高级LLM
         else :
+
+            # 如果用过LINKAI，就把LINKAI的最近添加的session中的内容copy给BasicLLM一份。
+            # 这样 BasicLLM 也能知道搜索或问图的结果内容, 下次问答时就能用到
+            if self.the_Bot_I_Want == "LinkAI" :
+                self.the_Bot_I_Want = "BasicLLM"
+                BasicBot = self.get_bot("chat")
+                BasicBot.sessions.session_reply(BasicReply.content, context["session_id"])               
+
             if needRecognizeImage :
+                #把图像识别的内容也给AdvanLLM知道一下
+                self.the_Bot_I_Want = "AdvanLLM"
+                AdvanBot = self.get_bot("chat")
+                AdvanBot.sessions.session_reply(BasicReply.content, context["session_id"])
+                
                 #炳：当前图片识别模式中（3分钟内上传过图片）暂不支持一问双答，3分钟后恢复一问双答
                 BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽当前图片识别模式中（3分钟内发过图片给我）暂不支持一问双答，下一次问答时会自动恢复一问双答功能"
+                
             else :
                 #炳：再用高级LLM拿到回复
                 context["gpt_model"] = conf().get("AdvanLLM")["model"]

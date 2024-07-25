@@ -65,6 +65,7 @@ class SessionManager(object):
         session = self.sessions[session_id]
         return session
 
+    #炳注：把 提问 记入 session 中
     def session_query(self, query, session_id):
         session = self.build_session(session_id)
         session.add_query(query)
@@ -76,6 +77,7 @@ class SessionManager(object):
             logger.warning("Exception when counting tokens precisely for prompt: {}".format(str(e)))
         return session
 
+    #炳注：把 回答 记入 session 中
     def session_reply(self, reply, session_id, total_tokens=None):
         session = self.build_session(session_id)
         session.add_reply(reply)
