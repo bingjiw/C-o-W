@@ -162,6 +162,7 @@ class ChatChannel(Channel):
                 nick_name = context["msg"].from_user_nickname
                 if nick_name and nick_name in nick_name_black_list:
                     # 黑名单过滤
+                    # 这里是第2次黑名单过滤，第1次过滤 滤：语音与图片
                     logger.warning(f"[chat_channel] Nickname '{nick_name}' in In BlackList, ignore")
                     return None
 
@@ -195,14 +196,15 @@ class ChatChannel(Channel):
       
 
         #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+        # 这里是第1次黑名单过滤，第2次过滤只滤文字
         # 炳 解决问题：黑名单中的人单聊发来语音时，竟也去做语音识别，纯粹浪费。
         #       方法：预判，如果是 黑名单中的人单聊 ，则不要做 _generate_reply 
         #                （自然也不会在_generate_reply中去进一步做语音识别了）
         # 消息内容匹配过程，并处理content
         nick_name_black_list = conf().get("nick_name_black_list", [])
         from_user_nick_name = context["msg"].from_user_nickname
-        if (
-            context.type == ContextType.VOICE and       # 如发来的是语音 
+        if (                                            # 如发来的是  语音 或 图片，且是黑名单中的人，则忽略跳过
+            (context.type == ContextType.VOICE or context.type == ContextType.IMAGE) and       
             not context.get("isgroup", False) and       # 且是单聊（不是群聊）
             from_user_nick_name and                     # 且发送者有呢称
             from_user_nick_name in nick_name_black_list # 且发送者呢称在黑名单中
