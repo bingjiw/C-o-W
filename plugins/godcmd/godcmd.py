@@ -328,7 +328,12 @@ class Godcmd(Plugin):
                 logger.debug("[Godcmd] command: %s by %s" % (cmd, user))
             elif any(cmd in info["alias"] for info in ADMIN_COMMANDS.values()):
                 if isadmin:
-                    if isgroup:
+
+                    #炳注：原来是：群聊不可执行管理员指令   原判断语句是：if isgroup:
+                    #炳有时在外没带电脑，忘关测试时，有新友来聊天，炳需要仅通过手机微信关掉C-o-W，防机器人抢答干扰真人真聊
+                    #炳给它开个口子，如果是 群聊 且 命令不是 #stop 或 #resume，就不能执行。
+                    #这样若是#stop或#resume就会跳到else去执行了。
+                    if isgroup and (cmd not in ["stop", "resume"]):
                         ok, result = False, "群聊不可执行管理员指令"
                     else:
                         cmd = next(c for c, info in ADMIN_COMMANDS.items() if cmd in info["alias"])
