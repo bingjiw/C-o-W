@@ -59,6 +59,8 @@ def _check(func):
         if conf().get("hot_reload") == True and int(create_time) < int(time.time()) - 60:  # 跳过1分钟前的历史消息
             logger.debug("[WX]history message {} skipped".format(msgId))
             return
+        
+        #炳注：原：若是 我自己发的消息 且 是单聊 （即：一对一单聊时，对我自己发的消息  跳过不处理）
         if cmsg.my_msg and not cmsg.is_group:
             logger.debug("[WX]my message {} skipped".format(msgId))
             return

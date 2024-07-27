@@ -444,8 +444,11 @@ class Godcmd(Plugin):
             e_context.action = EventAction.BREAK_PASS
 
     def authenticate(self, userid, args, isadmin, isgroup) -> Tuple[bool, str]:
-        if isgroup:
-            return False, "请勿在群聊中认证"
+        
+        #炳：改为允许在群聊中认证。  因为炳有时要自己用 #stop 命令，发于安全的内测群中，以临时关闭（当有友来聊时）
+        # 原先是不能在群聊中认证的。
+        # if isgroup:
+        #     return False, "请勿在群聊中认证"
 
         if isadmin:
             return False, "管理员账号无需认证"
