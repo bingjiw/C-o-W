@@ -273,6 +273,13 @@ class ChatChannel(Channel):
             if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
                 context["channel"] = e_context["channel"]
 
+                #炳加：
+                #如果是对 图片、语音、其他怪的引用 全都 回复 “我看不到你引用的内容”
+                prefixes = ("「[图片]」", "「[该消息类型暂不能展示]」", "「[视频]」")
+                strReceivedMsg = context.content
+                if strReceivedMsg.startswith(prefixes):
+                    reply = Reply(ReplyType.TEXT, "🙁我看不见你引用的内容。\n\n我只能看见对文字消息的引用。如果是图片，请重发图片，随后再问我与图片相关的问题。")
+
                 reply = super().build_reply_content(context.content, context)
                 #炳注：其实以上这句才是真正让bot去调用LLM回答的命令，
                 # _generate_reply 本身只是一个空壳子：其最重要的工作就是把语音变成文本后再调用一次自己
