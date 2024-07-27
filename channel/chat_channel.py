@@ -52,8 +52,14 @@ class ChatChannel(Channel):
 
         #炳：对 微信的引用 提取文本与整理格式
         def WeiXin_Reference_extract_and_format(text):
-            extracted_text = re.search('：(.+?)」', text).group(1)
-            return f"「{extracted_text}」\n{ text.splitlines()[-1].strip()}"
+            # 1. 删除第一次遇到的「和：之间的内容，并删除：
+            text = re.sub(r'「[^」]*：', '「', text, count=1)
+            
+            # 2. 将最后一次出现的 - - - - - - - - - - - - - - - 替换为换行
+            text = text.rsplit(' - - - - - - - - - - - - - - - ', 1)
+            text = '\n'.join(text)
+            
+            return text
 
 
         context = Context(ctype, content)
