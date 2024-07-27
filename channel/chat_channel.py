@@ -56,7 +56,7 @@ class ChatChannel(Channel):
             text = re.sub(r'「[^」]*：', '「', text, count=1)
             
             # 2. 将最后一次出现的 - - - - - - - - - - - - - - - 替换为换行
-            text = text.rsplit(' - - - - - - - - - - - - - - - ', 1)
+            text = text.rsplit('- - - - - - - - - - - - - - -', 1)
             text = '\n'.join(text)
             
             return text
@@ -129,6 +129,8 @@ class ChatChannel(Channel):
 
         # 消息内容匹配过程，并处理content
         if ctype == ContextType.TEXT:
+
+            #微信中的引用  微信中的引用  微信中的引用
             if first_in and "」\n- - - - - - -" in content:  # 初次匹配 过滤引用消息
 
                 #炳改，使支持 微信中的引用
@@ -255,11 +257,14 @@ class ChatChannel(Channel):
             {"channel": self, "context": context, "reply": reply},
         )
 
-
-        #《《《《 只在【输入消息是#开头指令】，才产生事件emit_event。 
-        if (context.content.startswith("#")) :
-            e_context = PluginManager().emit_event( e_context )        
-        #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+        e_context = PluginManager().emit_event( e_context )
+        #炳最新 恢复每次都产生事件的原因：为了要利用Godcmd的 #stop #resume 功能，
+        # 需要每次都产生事件，才能由Godcmd插件来决定根据当前 isRunning 的状态要不要后面的流程继续走下去
+        #
+        # 以下是炳的旧代码： 只在【输入消息是#开头指令】，才产生事件emit_event。 
+        # if (context.content.startswith("#")) :
+        #     e_context = PluginManager().emit_event( e_context )        
+        # #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
         
 
         reply = e_context["reply"]

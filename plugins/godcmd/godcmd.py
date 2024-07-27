@@ -279,12 +279,14 @@ class Godcmd(Plugin):
                 elif cmd == "id":
                     ok, result = True, user
                 elif cmd == "炳禁客自设set_openai_api_key":
-                    if len(args) == 1:
-                        user_data = conf().get_user_data(user)
-                        user_data["openai_api_key"] = args[0]
-                        ok, result = True, "你的OpenAI私有api_key已设置为" + args[0]
-                    else:
-                        ok, result = False, "请提供一个api_key"
+                    pass
+                    # 炳禁客自设
+                    # if len(args) == 1:
+                    #     user_data = conf().get_user_data(user)
+                    #     user_data["openai_api_key"] = args[0]
+                    #     ok, result = True, "你的OpenAI私有api_key已设置为" + args[0]
+                    # else:
+                    #     ok, result = False, "请提供一个api_key"
                 elif cmd == "reset_openai_api_key":
                     try:
                         user_data = conf().get_user_data(user)
@@ -293,12 +295,14 @@ class Godcmd(Plugin):
                     except Exception as e:
                         ok, result = False, "你没有设置私有api_key"
                 elif cmd == "炳禁客自设set_gpt_model":
-                    if len(args) == 1:
-                        user_data = conf().get_user_data(user)
-                        user_data["gpt_model"] = args[0]
-                        ok, result = True, "你的GPT模型已设置为" + args[0]
-                    else:
-                        ok, result = False, "请提供一个GPT模型"
+                    pass
+                    # 炳禁客自设
+                    # if len(args) == 1:
+                    #     user_data = conf().get_user_data(user)
+                    #     user_data["gpt_model"] = args[0]
+                    #     ok, result = True, "你的GPT模型已设置为" + args[0]
+                    # else:
+                    #     ok, result = False, "请提供一个GPT模型"
                 elif cmd == "gpt_model":
                     user_data = conf().get_user_data(user)
                     model = conf().get("model")
