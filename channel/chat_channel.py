@@ -279,7 +279,7 @@ class ChatChannel(Channel):
                 strReceivedMsg = context.content
                 logger.debug(f"如果是对 图片、语音、其他怪的引用 全都 回复 “我看不到你引用的内容”，收到消息【{strReceivedMsg}】")
                 if strReceivedMsg.startswith(prefixes):
-                    reply = Reply(ReplyType.TEXT, "🙁我看不见你引用的内容。\n\n我只能看见对文字消息的引用。如果是图片，请重发图片，随后再问我与图片相关的问题。")
+                    reply = Reply(ReplyType.TEXT, "🙁我看不见你引用的内容。\n\n我只能看见对文字消息的引用。\n\n如果是图片，请重发图片，随后再问我与图片相关的问题。")
                 else :
                     reply = super().build_reply_content(context.content, context)
                     #炳注：其实以上这句才是真正让bot去调用LLM回答的命令，
@@ -354,7 +354,7 @@ class ChatChannel(Channel):
                 # elif itchat_msg["Type"] == SHARING:
                 # self.ctype = ContextType.SHARING
                 # self.content = itchat_msg.get("Url")
-                logger.warning(f"[chat_channel.py]将处理微信的“图文分享”: {self.content}")
+                logger.warning(f"[chat_channel.py]将处理微信的“图文分享”: {context.content}")
                 context.type = ContextType.TEXT #把类型改为文字文本类型，以便后面的处理不会遇到刁难
                 #以下2句是从最前面的TEXT的处理方法处抄来的
                 context["channel"] = e_context["channel"] #不知何意，照抄之
