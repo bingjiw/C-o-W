@@ -49,6 +49,13 @@ class ChatChannel(Channel):
 
     # 根据消息构造context，消息内容相关的触发项写在这里
     def _compose_context(self, ctype: ContextType, content, **kwargs):
+
+        #炳：对 微信的引用 提取文本与整理格式
+        def WeiXin_Reference_extract_and_format(text):
+            extracted_text = re.search('：(.+?)」', text).group(1)
+            return f"「{extracted_text}」\n{ text.splitlines()[-1].strip()}"
+
+
         context = Context(ctype, content)
         context.kwargs = kwargs
         # context首次传入时，origin_ctype是None,
@@ -117,9 +124,13 @@ class ChatChannel(Channel):
         # 消息内容匹配过程，并处理content
         if ctype == ContextType.TEXT:
             if first_in and "」\n- - - - - - -" in content:  # 初次匹配 过滤引用消息
-                logger.debug(content)
-                logger.debug("[chat_channel]reference query skipped")
-                return None
+
+                #炳改，使支持 微信中的引用
+                #整理一下文本与格式，以便LLM处理与理解
+                content = WeiXin_Reference_extract_and_format(content)
+                logger.debug(f"微信引用如下将发给LLM:\n{content}")
+                #logger.debug("[chat_channel]reference query skipped")
+                #炳：取消了原来对引用的跳过 return None
 
             nick_name_black_list = conf().get("nick_name_black_list", [])
             if context.get("isgroup", False):  # 群聊
@@ -250,7 +261,12 @@ class ChatChannel(Channel):
             logger.debug("[chat_channel] ready to handle context: type={}, content={}".format(context.type, context.content))
             if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
                 context["channel"] = e_context["channel"]
+
                 reply = super().build_reply_content(context.content, context)
+                #炳注：其实以上这句才是真正让bot去调用LLM回答的命令，
+                # _generate_reply 本身只是一个空壳子：其最重要的工作就是把语音变成文本后再调用一次自己
+                # （其实还是在第2次调用时 通过上面这句 发到LLM的）
+
             elif context.type == ContextType.VOICE:  # 语音消息
                 cmsg = context["msg"]
                 cmsg.prepare()
@@ -272,10 +288,10 @@ class ChatChannel(Channel):
                     pass
                     # logger.warning("[chat_channel]delete temp file error: " + str(e))
 
+                #前面把语音变成文字后，再调用一遍自己（把消息当作文本来处理并调用）自己本身这个函数_generate_reply
                 if reply.type == ReplyType.TEXT:
                     new_context = self._compose_context(ContextType.TEXT, reply.content, **context.kwargs)
                     if new_context:
-
                         # 重复调用函数自己： 在_generate_reply函数中调用_generate_reply函数自己
                         reply = self._generate_reply(new_context)
 
@@ -312,7 +328,21 @@ class ChatChannel(Channel):
 
 
             elif context.type == ContextType.SHARING:  # 分享信息，当前无默认逻辑
-                pass
+
+                # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+                # 炳改，使支持微信的“图文分享”
+                # 由以下代码片断可知：微信的“图文分享”在content中就是一个URL链接。
+                # elif itchat_msg["Type"] == SHARING:
+                # self.ctype = ContextType.SHARING
+                # self.content = itchat_msg.get("Url")
+                logger.warning(f"[chat_channel.py]将处理微信的“图文分享”: {self.content}")
+                context.type = ContextType.TEXT #把类型改为文字文本类型，以便后面的处理不会遇到刁难
+                #以下2句是从最前面的TEXT的处理方法处抄来的
+                context["channel"] = e_context["channel"] #不知何意，照抄之
+                #因Deepseek及gpt-4o已有总结链接的能力，所以直接让它们总结链接即可。
+                reply = super().build_reply_content(f"总结此链接所指向的页面内容：{context.content}", context)
+                # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                
             elif context.type == ContextType.FUNCTION or context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
                 pass
             else:
