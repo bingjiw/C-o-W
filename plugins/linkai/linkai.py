@@ -78,8 +78,11 @@ class LinkAI(Plugin):
             if not res:
                 _set_reply_text("因为神秘力量无法获取文章内容，请稍后再试吧~", e_context, level=ReplyType.TEXT)
                 return
+            
+            #炳注：下面这句 里面会 设 BREAK_PASS
             _set_reply_text(res.get("summary") + "\n\n💬 发送 \"开启对话\" 可以开启与文章内容的对话", e_context,
                             level=ReplyType.TEXT)
+            
             USER_FILE_MAP[_find_user_id(context) + "-sum_id"] = res.get("summary_id")
             return
 
@@ -121,6 +124,7 @@ class LinkAI(Plugin):
             e_context.action = EventAction.BREAK_PASS
             return
 
+        #判断 是不是 group_app_map群聊与LINKAI的应用 映射的 聊天 ？
         if self._is_chat_task(e_context):
             # 文本对话任务处理
             self._process_chat_task(e_context)

@@ -5,7 +5,7 @@
             "priority": 999
         },
         "linkai": {
-            "enabled": true,
+            "enabled": false,
             "priority": 99
         }
     }
