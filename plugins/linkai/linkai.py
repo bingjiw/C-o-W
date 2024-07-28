@@ -90,7 +90,7 @@ class LinkAI(Plugin):
                 (context.type == ContextType.TEXT and self._is_summary_open(context) and LinkSummary().check_url(context.content)):
             if not LinkSummary().check_url(context.content):
                 return
-            _send_info(e_context, "正在为你加速生成摘要，请稍后")
+            _send_info(e_context, "收到 图文分享（公众号内容），正在阅读分析并生成摘要，请稍后...")
             res = LinkSummary().summary_url(context.content)
             if not res:
                 _set_reply_text("因为神秘力量无法获取文章内容，请稍后再试吧~", e_context, level=ReplyType.TEXT)
