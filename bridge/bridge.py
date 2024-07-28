@@ -170,6 +170,8 @@ class Bridge(object):
             self.the_Bot_I_Want = "LinkAI"
             strQuerySendToLinkAI = f"{query}"
             #
+            #调用LINKAI BOT前要把SHARING改为TEXT，否则LINKAI会报错：Bot不支持处理SHARING类型的消息
+            context.type = ContextType.TEXT
             BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)        
             #
             logger.debug(f"正在bridge.py - fetch_reply_content函数中：解读 微信的图文分享【{strQuerySendToLinkAI}】")
