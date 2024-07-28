@@ -73,7 +73,8 @@ class LinkSummary:
             logger.warn(f"[LinkSum] file size exceeds limit, No processing, file_size={file_size}KB")
             return False
 
-        suffix = file_path.split(".")[-1]
+        #support_list中全是小写，所以把后缀文件名转成小写，以便比较匹配
+        suffix = file_path.split(".")[-1].lower
         support_list = ["txt", "csv", "docx", "pdf", "md", "jpg", "jpeg", "png"]
         if suffix not in support_list:
             logger.warn(f"[LinkSum] unsupported file, suffix={suffix}, support_list={support_list}")

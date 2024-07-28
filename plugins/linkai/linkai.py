@@ -11,19 +11,6 @@ import os
 from .utils import Util
 from config import plugin_config
 
-# 注释掉装饰器，以免出错如下：可能因为我没走正常的插件流程 直接创建实例 调法不同导致
-# Exception: Plugin path not set
-#     from bridge.bridge import Bridge
-#   File "/root/C-o-W/bridge/bridge.py", line 7, in <module>
-#     from plugins.linkai import LinkAI
-#   File "/root/C-o-W/plugins/linkai/__init__.py", line 1, in <module>
-#     from .linkai import *
-#   File "/root/C-o-W/plugins/linkai/linkai.py", line 22, in <module>
-#     class LinkAI(Plugin):
-#   File "/root/C-o-W/plugins/plugin_manager.py", line 39, in wrapper
-#     raise Exception("Plugin path not set")
-# Exception: Plugin path not set
-#
 @plugins.register(
     name="linkai",
     desc="A plugin that supports knowledge base and midjourney drawing.",
@@ -32,11 +19,7 @@ from config import plugin_config
     desire_priority=99
 )
 class LinkAI(Plugin):
-    # 在 LinkAI 类中添加 path = __file__ 以满足装饰器的要求。
-    # __file__ 是一个特殊变量，包含当前文件的路径。
-    # 这样修改后，你应该能够避免 "Plugin path not set" 异常
-    # path = __file__
-
+    
     def __init__(self):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
@@ -50,6 +33,7 @@ class LinkAI(Plugin):
         if self.config:
             self.sum_config = self.config.get("summary")
         logger.info(f"[LinkAI] inited, config={self.config}")
+
 
     def on_handle_context(self, e_context: EventContext):
         """
@@ -65,6 +49,7 @@ class LinkAI(Plugin):
             # filter content no need solve
             return
 
+        #文件 或 图片
         if context.type in [ContextType.FILE, ContextType.IMAGE] and self._is_summary_open(context):
             # 文件处理
             context.get("msg").prepare()
@@ -72,11 +57,11 @@ class LinkAI(Plugin):
             if not LinkSummary().check_file(file_path, self.sum_config):
                 return
             if context.type != ContextType.IMAGE:
-                _send_info(e_context, "正在为你加速生成摘要，请稍后")
+                _send_info(e_context, "收到 图片，正在分析解读并生成摘要，请稍后...")
             res = LinkSummary().summary_file(file_path)
             if not res:
                 if context.type != ContextType.IMAGE:
-                    _set_reply_text("因为神秘力量无法获取内容，请稍后再试吧", e_context, level=ReplyType.TEXT)
+                    _set_reply_text("处理出错，因为神秘力量无法获取内容，请稍后再试吧", e_context, level=ReplyType.TEXT)
                 return
             summary_text = res.get("summary")
             if context.type != ContextType.IMAGE:
@@ -90,10 +75,10 @@ class LinkAI(Plugin):
                 (context.type == ContextType.TEXT and self._is_summary_open(context) and LinkSummary().check_url(context.content)):
             if not LinkSummary().check_url(context.content):
                 return
-            _send_info(e_context, "收到 图文分享（公众号内容），正在阅读分析并生成摘要，请稍后...")
+            _send_info(e_context, "收到 图文分享（公众号文章），正在阅读分析并生成摘要，请稍后...")
             res = LinkSummary().summary_url(context.content)
             if not res:
-                _set_reply_text("因为神秘力量无法获取文章内容，请稍后再试吧~", e_context, level=ReplyType.TEXT)
+                _set_reply_text("（公众号文章）因为神秘力量无法获取文章内容，请稍后再试吧~", e_context, level=ReplyType.TEXT)
                 return
             
             #炳注：下面这句 里面会 设 BREAK_PASS
