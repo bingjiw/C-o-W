@@ -186,7 +186,7 @@ class Bridge(object):
                 {"channel": self, "context": context, "reply": reply},
             ) 
             a_LinkAI_Plugin.on_handle_context(e_context)
-            BasicReply.content = f"🔌{e_context["reply"]}"
+            BasicReply.content = f"🔌{e_context['reply']}"
         
 
         else :
