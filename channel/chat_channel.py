@@ -365,7 +365,7 @@ class ChatChannel(Channel):
                 #以下2句是从最前面的TEXT的处理方法处抄来的
                 context["channel"] = e_context["channel"] #不知何意，照抄之
                 #因Deepseek及gpt-4o已有总结链接的能力，所以直接让它们总结链接即可。
-                reply = super().build_reply_content(f"总结此链接的页面内容：{context.content}", context)
+                reply = super().build_reply_content(f"{context.content}", context)
                 # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 
             elif context.type == ContextType.FUNCTION or context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑

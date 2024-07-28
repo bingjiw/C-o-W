@@ -187,6 +187,7 @@ class Bridge(object):
             #
             from plugins import PluginManager
             e_context = PluginManager().emit_event( e_context )
+            BasicReply = Reply(ReplyType.TEXT)
             BasicReply.content = f"🔌{e_context['reply']}"
         
 
