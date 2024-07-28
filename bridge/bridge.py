@@ -179,10 +179,10 @@ class Bridge(object):
             #因下面的EventContext需要Reply()对象，所以就给它造一个
             reply = Reply(ReplyType.TEXT)
             #
-            #因下面的函数需要EventContext对象，所以就给它造一个
+            #因下面的函数需要EventContext对象，所以就给它造一个   
             e_context = EventContext(
                 Event.ON_HANDLE_CONTEXT,
-                {"channel": self, "context": context, "reply": reply},
+                {"channel": context["channel"], "context": context, "reply": reply},
             ) 
             #
             from plugins import PluginManager
