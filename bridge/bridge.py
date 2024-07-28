@@ -3,9 +3,13 @@
 #《《《《《 判断 AI回复的文本 决定要不要实时搜索
 from channel.ANSWER_APOLOGY import analyze_text_features__need_search
 
+#LinkAI插件
+from plugins.linkai import LinkAI
+from plugins import *
+
 from bot.bot_factory import create_bot
 from bridge.context import Context,ContextType
-from bridge.reply import Reply
+from bridge.reply import Reply,ReplyType
 from common import const
 from common.log import logger
 from common.singleton import singleton
@@ -166,17 +170,24 @@ class Bridge(object):
         #如果需要 解读 微信的图文分享（公众号、视频号、小程序等）
         elif needReadWeiXinSHARING :
             #因发现deepseek读到的微信分享页面内容错误，估计微信页面用了些奇怪技术防止机器人读取。所以还是交给LINKAI处理吧，LINKAI已经弄通了微信页面的怪诡计
-            # 🚩🚩调用：LinkAI
-            self.the_Bot_I_Want = "LinkAI"
-            strQuerySendToLinkAI = f"{query}"
+            # 🚩调用：【LinkAI插件】来处理，而不是LinkAIBot。
+            #LinkAI插件可以读到正确的微信的图文分享内容，但LinkAIBot却会读到错误的。
+            #因LinkAI插件与LinkAIBot的分工不同：
+            #LinkAI插件：处理 上传文档、总结微信分享、特殊的群聊映射LINKAI应用等
+            #LinkAIBot：处理 普通文本对话
+            a_LinkAI_Plugin = LinkAI()
             #
-            #调用LINKAI BOT前要把SHARING改为TEXT，否则LINKAI会报错：Bot不支持处理SHARING类型的消息
-            context.type = ContextType.TEXT
-            BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)        
+            #因下面的EventContext需要Reply()对象，所以就给它造一个
+            reply = Reply(ReplyType.TEXT)
             #
-            logger.debug(f"正在bridge.py - fetch_reply_content函数中：解读 微信的图文分享【{strQuerySendToLinkAI}】")
-            BasicReply.content = "🪐" + BasicReply.content 
-
+            #因下面的on_handle_context函数需要EventContext对象，所以就给它造一个
+            e_context = EventContext(
+                Event.ON_HANDLE_CONTEXT,
+                {"channel": self, "context": context, "reply": reply},
+            ) 
+            a_LinkAI_Plugin.on_handle_context(e_context)
+            BasicReply.content = f"🔌{e_context["reply"]}"
+        
 
         else :
 

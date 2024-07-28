@@ -185,6 +185,11 @@ class PluginManager:
     def emit_event(self, e_context: EventContext, *args, **kwargs):
         if e_context.event in self.listening_plugins:
             for name in self.listening_plugins[e_context.event]:
+                
+                #炳注：在 plugins / plugins.json 中把
+                #  "linkai": { 的 "enabled": 设为了 false, 后，虽然linkai插件注册了，但
+                #在下面就不会去 触发 它的 处理函数了
+                #
                 if self.plugins[name].enabled and e_context.action == EventAction.CONTINUE:
                     logger.debug("Plugin %s triggered by event %s" % (name, e_context.event))
                     instance = self.instances[name]
