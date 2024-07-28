@@ -12,13 +12,13 @@ from .utils import Util
 from config import plugin_config
 
 
-@plugins.register(
-    name="linkai",
-    desc="A plugin that supports knowledge base and midjourney drawing.",
-    version="0.1.0",
-    author="https://link-ai.tech",
-    desire_priority=99
-)
+# @plugins.register(
+#     name="linkai",
+#     desc="A plugin that supports knowledge base and midjourney drawing.",
+#     version="0.1.0",
+#     author="https://link-ai.tech",
+#     desire_priority=99
+# )
 class LinkAI(Plugin):
     # 在 LinkAI 类中添加 path = __file__ 以满足装饰器的要求。
     # __file__ 是一个特殊变量，包含当前文件的路径。
