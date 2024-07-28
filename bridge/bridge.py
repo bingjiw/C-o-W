@@ -188,7 +188,7 @@ class Bridge(object):
             from plugins import PluginManager
             e_context = PluginManager().emit_event( e_context )
             BasicReply = Reply(ReplyType.TEXT)
-            BasicReply.content = f"🔌{e_context['reply']}"
+            BasicReply.content = f"{e_context['reply'].content}"
         
 
         else :
@@ -224,7 +224,12 @@ class Bridge(object):
                 logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🌎说明这是互联网实时搜索得来的回答")
                 BasicReply.content = "🌎" + BasicReply.content 
 
+
+
+
         # 到此，基础LLM 肯定已得到答案
+
+
 
         #炳：如果 基础LLM 返回说有：不当敏感内容（图片也有可能会导致LLM产生色情或政治的敏感内容的答案）
         if "data may contain inappropriate content" in BasicReply.content :
@@ -259,12 +264,14 @@ class Bridge(object):
             else :
                 strQueryToLLM = query
         
+
             #炳：再用高级LLM拿到回复，
             # 因得到了识图的文字答案，所以AdvanLLM也能仅通过识图的答案文字来回答用户的问题 
             # (看不到图，仅通过听到对图的描述 来“盲答”用户的问题)
             context["gpt_model"] = conf().get("AdvanLLM")["model"]
             # 🚩🚩调用：高级LLM
             self.the_Bot_I_Want = "AdvanLLM"
+            context.type = ContextType.TEXT     #以免出现：Bot不支持处理SHARING类型的消息
             AdvanReply = self.get_bot("chat").reply(strQueryToLLM, context)
 
             #炳：合并2个回复 到一个回复中
