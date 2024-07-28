@@ -142,6 +142,9 @@ class Bridge(object):
         #炳：本函数中 用 self.bots["chat"]["BasicLLM"] 会出错，因为self.bots["chat"]还没创建
         #炳：所以，都要用self.get_bot("chat"), 此函数中若bot还没创建，它会创建
 
+        #默认不用在线上网搜索，预告定义好，以免后面代码出错
+        needOnlineSearch = False
+
         #如果3分钟内有上传过图片，则认为需要识图
         needRecognizeImage = memory.USER_IMAGE_CACHE.get( context["session_id"] ) is not None
 
@@ -218,11 +221,11 @@ class Bridge(object):
 
             # 如果用过LINKAI，就把LINKAI的最近添加的session中的内容copy给BasicLLM一份。
             # 这样 BasicLLM的Session 也能知道【搜索】或【问图】的结果内容, 下次问答时就能用到
-            if needRecognizeImage or needOnlineSearch or needReadWeiXinSHARING :                               #不能用这句来判断，因为get_bot后会马上把这个变量改为BasicLLM    if self.the_Bot_I_Want == "LinkAI" :
+            if needRecognizeImage or needReadWeiXinSHARING or needOnlineSearch :     #不能用这句来判断，因为get_bot后会马上把这个变量改为BasicLLM    if self.the_Bot_I_Want == "LinkAI" :
                 self.the_Bot_I_Want = "BasicLLM"
                 BasicBot = self.get_bot("chat")
                 BasicBot.sessions.session_reply(BasicReply.content, context["session_id"])    
-                logger.debug("把LINKAI的最近添加的session中的内容copy给BasicLLM一份。这样 BasicLLM的Session 也能知道【搜索】或【问图】或【微信图文分享】的结果内容, 下次问答时就能用到。")
+                logger.debug("把LINKAI的最近添加的session中的内容copy给BasicLLM一份。这样 BasicLLM的Session 也能知道【搜索】或【问图】或【微信图文分享】的结果内容, 下次问答时用户提到与之前相关的内容时LLM就能知道。")
 
             if needRecognizeImage :
                 # #把【图像识别的内容】也给AdvanLLM的Session知道一下,以便后面顺畅自然的问答
