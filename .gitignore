@@ -8,12 +8,12 @@ __pycache__/
 venv*
 *.pyc
 config.json
+!plugins/linkai/config.json
 config.测试.json
 config.生产.json
 QR.png
 nohup.out
 tmp
-plugins.json
 itchat.pkl
 *.log
 user_datas.pkl

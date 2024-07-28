@@ -1,0 +1,12 @@
+{
+    "plugins": {
+        "Godcmd": {
+            "enabled": true,
+            "priority": 999
+        },
+        "linkai": {
+            "enabled": true,
+            "priority": 99
+        }
+    }
+}
