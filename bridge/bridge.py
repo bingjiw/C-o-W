@@ -173,22 +173,18 @@ class Bridge(object):
             #LinkAI插件：处理 上传文档、总结微信分享、特殊的群聊映射LINKAI应用等
             #LinkAIBot：处理 普通文本对话
 
-            #LinkAI插件
-            #from plugins.linkai import LinkAI
-            #from plugins import EventContext, Event
 
-            #a_LinkAI_Plugin = LinkAI()
+            from plugins import EventContext, Event
             #
             #因下面的EventContext需要Reply()对象，所以就给它造一个
-            #reply = Reply(ReplyType.TEXT)
+            reply = Reply(ReplyType.TEXT)
             #
-            #因下面的on_handle_context函数需要EventContext对象，所以就给它造一个
-            #e_context = EventContext(
-            #    Event.ON_HANDLE_CONTEXT,
-            #    {"channel": self, "context": context, "reply": reply},
-            #) 
-            #a_LinkAI_Plugin.on_handle_context(e_context)
-
+            #因下面的函数需要EventContext对象，所以就给它造一个
+            e_context = EventContext(
+                Event.ON_HANDLE_CONTEXT,
+                {"channel": self, "context": context, "reply": reply},
+            ) 
+            #
             from plugins import PluginManager
             e_context = PluginManager().emit_event( e_context )
             BasicReply.content = f"🔌{e_context['reply']}"
