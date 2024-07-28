@@ -257,7 +257,10 @@ class ChatChannel(Channel):
             {"channel": self, "context": context, "reply": reply},
         )
 
-        e_context = PluginManager().emit_event( e_context )
+
+        #若 不是微信分享，才去产生（EMIT）事件给插件处理。使微信分享时不会被插件在此提前处理
+        if not context.type == ContextType.SHARING :
+            e_context = PluginManager().emit_event( e_context )
         #炳最新 恢复每次都产生事件的原因：为了要利用Godcmd的 #stop #resume 功能，
         # 需要每次都产生事件，才能由Godcmd插件来决定根据当前 isRunning 的状态要不要后面的流程继续走下去
         #
