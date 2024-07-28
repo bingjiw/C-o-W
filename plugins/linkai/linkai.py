@@ -11,19 +11,31 @@ import os
 from .utils import Util
 from config import plugin_config
 
-
-# @plugins.register(
-#     name="linkai",
-#     desc="A plugin that supports knowledge base and midjourney drawing.",
-#     version="0.1.0",
-#     author="https://link-ai.tech",
-#     desire_priority=99
-# )
+# 注释掉装饰器，以免出错如下：可能因为我没走正常的插件流程 直接创建实例 调法不同导致
+# Exception: Plugin path not set
+#     from bridge.bridge import Bridge
+#   File "/root/C-o-W/bridge/bridge.py", line 7, in <module>
+#     from plugins.linkai import LinkAI
+#   File "/root/C-o-W/plugins/linkai/__init__.py", line 1, in <module>
+#     from .linkai import *
+#   File "/root/C-o-W/plugins/linkai/linkai.py", line 22, in <module>
+#     class LinkAI(Plugin):
+#   File "/root/C-o-W/plugins/plugin_manager.py", line 39, in wrapper
+#     raise Exception("Plugin path not set")
+# Exception: Plugin path not set
+#
+@plugins.register(
+    name="linkai",
+    desc="A plugin that supports knowledge base and midjourney drawing.",
+    version="0.1.0",
+    author="https://link-ai.tech",
+    desire_priority=99
+)
 class LinkAI(Plugin):
     # 在 LinkAI 类中添加 path = __file__ 以满足装饰器的要求。
     # __file__ 是一个特殊变量，包含当前文件的路径。
     # 这样修改后，你应该能够避免 "Plugin path not set" 异常
-    path = __file__
+    # path = __file__
 
     def __init__(self):
         super().__init__()

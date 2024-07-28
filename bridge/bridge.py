@@ -3,9 +3,6 @@
 #《《《《《 判断 AI回复的文本 决定要不要实时搜索
 from channel.ANSWER_APOLOGY import analyze_text_features__need_search
 
-#LinkAI插件
-from plugins.linkai import LinkAI
-from plugins import *
 
 from bot.bot_factory import create_bot
 from bridge.context import Context,ContextType
@@ -175,6 +172,11 @@ class Bridge(object):
             #因LinkAI插件与LinkAIBot的分工不同：
             #LinkAI插件：处理 上传文档、总结微信分享、特殊的群聊映射LINKAI应用等
             #LinkAIBot：处理 普通文本对话
+
+            #LinkAI插件
+            from plugins.linkai import LinkAI
+            from plugins import EventContext, Event
+
             a_LinkAI_Plugin = LinkAI()
             #
             #因下面的EventContext需要Reply()对象，所以就给它造一个
