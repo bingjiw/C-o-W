@@ -20,6 +20,11 @@ from config import plugin_config
     desire_priority=99
 )
 class LinkAI(Plugin):
+    # 在 LinkAI 类中添加 path = __file__ 以满足装饰器的要求。
+    # __file__ 是一个特殊变量，包含当前文件的路径。
+    # 这样修改后，你应该能够避免 "Plugin path not set" 异常
+    path = __file__
+
     def __init__(self):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
