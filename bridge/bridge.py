@@ -145,6 +145,9 @@ class Bridge(object):
         #如果3分钟内有上传过图片，则认为需要识图
         needRecognizeImage = memory.USER_IMAGE_CACHE.get( context["session_id"] ) is not None
 
+        #如果需要 解读 微信的图文分享（公众号、视频号、小程序等）
+        needReadWeiXinSHARING = (context.type == ContextType.SHARING)
+
         #如果需要识图（那么就不用特地问基础LLM并判断要不要上网找答案了）
         if needRecognizeImage :
             # 🚩🚩调用：LinkAI
@@ -155,6 +158,20 @@ class Bridge(object):
             #
             logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🖼️说明需要识图（3分钟内有上传过图片）")
             BasicReply.content = "🖼️" + BasicReply.content 
+
+
+        #如果需要 解读 微信的图文分享（公众号、视频号、小程序等）
+        elif needReadWeiXinSHARING :
+            #因发现deepseek读到的微信分享页面内容错误，估计微信页面用了些奇怪技术防止机器人读取。所以还是交给LINKAI处理吧，LINKAI已经弄通了微信页面的怪诡计
+            # 🚩🚩调用：LinkAI
+            self.the_Bot_I_Want = "LinkAI"
+            strQuerySendToLinkAI = f"{query}"
+            #
+            BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)        
+            #
+            logger.debug(f"正在bridge.py - fetch_reply_content函数中：解读 微信的图文分享【{strQuerySendToLinkAI}】")
+            BasicReply.content = "🪐" + BasicReply.content 
+
 
         else :
 
@@ -201,19 +218,26 @@ class Bridge(object):
 
             # 如果用过LINKAI，就把LINKAI的最近添加的session中的内容copy给BasicLLM一份。
             # 这样 BasicLLM的Session 也能知道【搜索】或【问图】的结果内容, 下次问答时就能用到
-            if needRecognizeImage or needOnlineSearch :                               #不能用这句来判断，因为get_bot后会马上把这个变量改为BasicLLM    if self.the_Bot_I_Want == "LinkAI" :
+            if needRecognizeImage or needOnlineSearch or needReadWeiXinSHARING :                               #不能用这句来判断，因为get_bot后会马上把这个变量改为BasicLLM    if self.the_Bot_I_Want == "LinkAI" :
                 self.the_Bot_I_Want = "BasicLLM"
                 BasicBot = self.get_bot("chat")
                 BasicBot.sessions.session_reply(BasicReply.content, context["session_id"])    
-                logger.debug("把LINKAI的最近添加的session中的内容copy给BasicLLM一份。这样 BasicLLM的Session 也能知道【搜索】或【问图】的结果内容, 下次问答时就能用到。")
+                logger.debug("把LINKAI的最近添加的session中的内容copy给BasicLLM一份。这样 BasicLLM的Session 也能知道【搜索】或【问图】或【微信图文分享】的结果内容, 下次问答时就能用到。")
 
             if needRecognizeImage :
-                #把图像识别的内容也给AdvanLLM的Session知道一下,以便后面顺畅自然的问答
-                self.the_Bot_I_Want = "AdvanLLM"
-                AdvanBot = self.get_bot("chat")
-                AdvanBot.sessions.session_reply(BasicReply.content, context["session_id"])
-                logger.debug("把图像识别的结果答案也给AdvanLLM的Session知道一下,以便后面顺畅自然的问答")
-                strQueryToLLM = f"根据刚才描述图片的文字，回答问题：{query}"
+                # #把【图像识别的内容】也给AdvanLLM的Session知道一下,以便后面顺畅自然的问答
+                # self.the_Bot_I_Want = "AdvanLLM"
+                # AdvanBot = self.get_bot("chat")
+                # AdvanBot.sessions.session_reply(BasicReply.content, context["session_id"])
+                # logger.debug("把【图像识别的结果答案】也给AdvanLLM的Session知道一下,以便后面顺畅自然的问答")
+                #
+                # 直接让高级LLM根据上面的BasicLLM（LINKAI）识别出的图片的文字描述，来回答问题
+                strQueryToLLM = f"“{BasicReply.content}”\n\n根据以上对某图片的文字描述，回答问题：\n\n{query}"                    
+
+            if needReadWeiXinSHARING :
+                #【微信图文分享】直接让高级LLM评价上面的BasicLLM（LINKAI）读到的【微信图文分享】内容
+                strQueryToLLM = f"对以下内容发表你的看法：\n\n“{BasicReply.content}”"
+
             else :
                 strQueryToLLM = query
         

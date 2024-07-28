@@ -355,11 +355,14 @@ class ChatChannel(Channel):
                 # self.ctype = ContextType.SHARING
                 # self.content = itchat_msg.get("Url")
                 logger.warning(f"[chat_channel.py]将处理微信的“图文分享”: {context.content}")
-                context.type = ContextType.TEXT #把类型改为文字文本类型，以便后面的处理不会遇到刁难
+                #
+                #保持context.type为SHARING，在bridge.py中再调LINKAI处理。因发现deepseek读到的微信分享页面内容错误，估计微信页面用了些奇怪技术防止机器人读取。所以还是交给LINKAI处理吧，LINKAI已经弄通了微信页面的怪诡计
+                #context.type = ContextType.TEXT #把类型改为文字文本类型，以便后面的处理不会遇到刁难
+                #
                 #以下2句是从最前面的TEXT的处理方法处抄来的
                 context["channel"] = e_context["channel"] #不知何意，照抄之
                 #因Deepseek及gpt-4o已有总结链接的能力，所以直接让它们总结链接即可。
-                reply = super().build_reply_content(f"总结此链接所指向的页面内容：{context.content}", context)
+                reply = super().build_reply_content(f"总结此链接的页面内容：{context.content}", context)
                 # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 
             elif context.type == ContextType.FUNCTION or context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
