@@ -48,8 +48,9 @@ class EventContext:
     def __delitem__(self, key):
         del self.econtext[key]
 
+    #返回bool值： 是否pass
     def is_pass(self):
-        return self.action == EventAction.BREAK_PASS
+        return (self.action == EventAction.BREAK_PASS)
 
     def is_break(self):
         return self.action == EventAction.BREAK or self.action == EventAction.BREAK_PASS
