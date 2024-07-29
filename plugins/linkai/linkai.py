@@ -99,7 +99,7 @@ class LinkAI(Plugin):
                 ReplyErrorMsg_and_BREAK_PASS("暂不支持：小程序分享、视频号分享。\n\n我可以总结公众号文章分享", e_context)
                 return
             
-            _send_info(e_context, "收到 公众号分享，正在生成摘要，请稍后...\n\n（暂不支持：小程序分享、视频号分享）")
+            _send_info(e_context, "收到：\n公众号分享✅\n正在解读...\n\n不支持：\n小程序分享❎\n视频号分享❎")
             
             res = LinkSummary().summary_url(context.content)
             
