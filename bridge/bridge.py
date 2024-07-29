@@ -257,25 +257,27 @@ class Bridge(object):
             # VVVVVVVVVVVVVVVVV 保存LINKAI插件或BOT的问答内容到Session VVVVVVVVVVVVVVVVVV      
 
             # 如果用过LINKAI，就把LINKAI的最近添加的session中的内容copy给BasicLLM一份。
-            # 这样 BasicLLM的Session 也能知道【搜索】或【问图】的结果内容, 下次问答时就能用到
-            if  needSummarizeUploadFile or needReadWeiXinSHARING :    
-                strQueryAddToSession = "总结分享的文章/上传的文件"
-                strAnswerAddToSession = BasicReply.content
+            if needSummarizeUploadFile or needReadWeiXinSHARING or needRecognizeImage or needOnlineSearch :
                 
-            elif needRecognizeImage or needOnlineSearch : 
-                strQueryAddToSession = strQuerySendToLinkAI
-                strAnswerAddToSession = BasicReply.content
+                # 这样 BasicLLM的Session 也能知道【搜索】或【问图】的结果内容, 下次问答时就能用到
+                if  needSummarizeUploadFile or needReadWeiXinSHARING :    
+                    strQueryAddToSession = "总结分享的文章/上传的文件"
+                    strAnswerAddToSession = BasicReply.content
+                    
+                elif needRecognizeImage or needOnlineSearch : 
+                    strQueryAddToSession = strQuerySendToLinkAI
+                    strAnswerAddToSession = BasicReply.content
 
-            self.the_Bot_I_Want = "BasicLLM"
-            BasicBot = self.get_bot("chat")
+                self.the_Bot_I_Want = "BasicLLM"
+                BasicBot = self.get_bot("chat")
 
-            #把 提问 加入Basic LLM 的 session中
-            BasicBot.sessions.session_query(strQueryAddToSession, context["session_id"])   
+                #把 提问 加入Basic LLM 的 session中
+                BasicBot.sessions.session_query(strQueryAddToSession, context["session_id"])   
 
-            #把 回答 加入Basic LLM 的 session中
-            BasicBot.sessions.session_reply(strAnswerAddToSession, context["session_id"]) 
+                #把 回答 加入Basic LLM 的 session中
+                BasicBot.sessions.session_reply(strAnswerAddToSession, context["session_id"]) 
 
-            logger.debug("把LINKAI插件或BOT的问答内容copy给BasicLLM一份。这样 BasicLLM的Session 也能知道【搜索】或【问图】或【微信图文分享】的结果内容, 下次问答时用户提到与之前相关的内容时LLM就能知道。确保对话的流畅。")
+                logger.debug("把LINKAI插件或BOT的问答内容copy给BasicLLM一份。这样 BasicLLM的Session 也能知道【搜索】或【问图】或【微信图文分享】的结果内容, 下次问答时用户提到与之前相关的内容时LLM就能知道。确保对话的流畅。")
 
 
             # VVVVVVVVVVVVVVVVV 双答第 2 答 VVVVVVVVVVVVVVVVVV      
