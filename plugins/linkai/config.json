@@ -13,7 +13,7 @@
     },
     "summary": {
         "enabled": true,
-        "group_enabled": true,
+        "group_enabled": false,
         "max_file_size": 5000,
         "type": ["FILE", "SHARING"]
     }
