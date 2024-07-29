@@ -54,7 +54,10 @@ class LinkAI(Plugin):
             # 文件处理
             context.get("msg").prepare()
             file_path = context.content
+
+            #遇到 不支持的文件，提前退出
             if not LinkSummary().check_file(file_path, self.sum_config):
+                _send_info(e_context, "只能解读小于 5 MB 的 txt, csv, docx, pdf, md, jpg, jpeg, png 文件")
                 return
             
             #收到文件

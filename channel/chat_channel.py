@@ -278,7 +278,9 @@ class ChatChannel(Channel):
         reply = e_context["reply"]
         if not e_context.is_pass():
             logger.debug("[chat_channel] ready to handle context: type={}, content={}".format(context.type, context.content))
-            if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
+            
+            # 如果是 文字 或 画图
+            if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  
                 context["channel"] = e_context["channel"]
 
                 #炳加：
@@ -294,7 +296,8 @@ class ChatChannel(Channel):
                     # _generate_reply 本身只是一个空壳子：其最重要的工作就是把语音变成文本后再调用一次自己
                     # （其实还是在第2次调用时 通过上面这句 发到LLM的）
 
-            elif context.type == ContextType.VOICE:  # 语音消息
+            # 如果是 语音消息
+            elif context.type == ContextType.VOICE:  
                 cmsg = context["msg"]
                 cmsg.prepare()
                 file_path = context.content
@@ -333,6 +336,7 @@ class ChatChannel(Channel):
                         return
                     
 
+            # 如果是 图片消息，仅保存到本地（待用户下个问题时 可能会问有关图的问题）
             elif context.type == ContextType.IMAGE:  # 图片消息，当前仅做下载保存到本地的逻辑
                 
                 #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
@@ -354,8 +358,8 @@ class ChatChannel(Channel):
                 }
 
 
-
-            elif context.type == ContextType.SHARING:  # 分享信息，当前无默认逻辑
+            # 如是 公众号分享 或 文件
+            elif context.type == ContextType.SHARING or context.type == ContextType.FILE :  
 
                 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
                 # 炳改，使支持微信的“图文分享”
@@ -374,11 +378,14 @@ class ChatChannel(Channel):
                 reply = super().build_reply_content(f"{context.content}", context)
                 # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 
-            elif context.type == ContextType.FUNCTION or context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
+            # 函数调用等，当前无默认逻辑
+            elif context.type == ContextType.FUNCTION :  
                 pass
+
             else:
                 logger.warning("[chat_channel] unknown context type: {}".format(context.type))
                 return
+
         return reply
 
 
