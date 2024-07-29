@@ -187,8 +187,12 @@ class Bridge(object):
             #只为LINKAI插件 产生事件 emit_event
             e_context = PluginManager().emit_event_ONLY_FOR_PLUGIN_( "LINKAI", e_context )
             #
-            BasicReply = Reply(ReplyType.TEXT)
-            BasicReply.content = f"{e_context['reply'].content}"
+            # 某些不支持的分享，会返回None
+            if e_context is None :
+                return
+            else :
+                BasicReply = Reply(ReplyType.TEXT)
+                BasicReply.content = f"{e_context['reply'].content}"
         
 
 

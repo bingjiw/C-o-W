@@ -76,10 +76,15 @@ class LinkAI(Plugin):
 
         if (context.type == ContextType.SHARING and self._is_summary_open(context)) or \
                 (context.type == ContextType.TEXT and self._is_summary_open(context) and LinkSummary().check_url(context.content)):
+            
             if not LinkSummary().check_url(context.content):
+                _send_info(e_context, "暂不支持：小程序分享、视频号分享。\n\n我可以总结公众号文章分享")
                 return
+            
             _send_info(e_context, "收到 公众号分享，正在生成摘要，请稍后...\n\n（暂不支持：小程序分享、视频号分享）")
+            
             res = LinkSummary().summary_url(context.content)
+            
             if not res:
                 _set_reply_text("（公众号文章）因为神秘力量无法获取文章内容，请稍后再试吧~", e_context, level=ReplyType.TEXT)
                 return
