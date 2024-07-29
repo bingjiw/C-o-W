@@ -56,8 +56,11 @@ class LinkAI(Plugin):
             file_path = context.content
             if not LinkSummary().check_file(file_path, self.sum_config):
                 return
+            
+            #收到文件
             if context.type != ContextType.IMAGE:
-                _send_info(e_context, "收到 图片，正在分析解读并生成摘要，请稍后...")
+                _send_info(e_context, "收到文件，正在分析解读并生成摘要，请稍后...")
+
             res = LinkSummary().summary_file(file_path)
             if not res:
                 if context.type != ContextType.IMAGE:
