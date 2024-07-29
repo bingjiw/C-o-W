@@ -59,7 +59,7 @@ class LinkAI(Plugin):
             
             #收到文件
             if context.type != ContextType.IMAGE:
-                _send_info(e_context, "收到文件，正在分析解读并生成摘要，请稍后...")
+                _send_info(e_context, "收到文件，正在生成摘要，请稍后...\n\n（支持的文件类型：txt, csv, docx, pdf, md, jpg, jpeg, png）")
 
             res = LinkSummary().summary_file(file_path)
             if not res:
@@ -78,14 +78,15 @@ class LinkAI(Plugin):
                 (context.type == ContextType.TEXT and self._is_summary_open(context) and LinkSummary().check_url(context.content)):
             if not LinkSummary().check_url(context.content):
                 return
-            _send_info(e_context, "收到 图文分享（公众号文章），正在阅读分析并生成摘要，请稍后...")
+            _send_info(e_context, "收到 公众号分享，正在生成摘要，请稍后...\n\n（暂不支持：小程序分享、视频号分享）")
             res = LinkSummary().summary_url(context.content)
             if not res:
                 _set_reply_text("（公众号文章）因为神秘力量无法获取文章内容，请稍后再试吧~", e_context, level=ReplyType.TEXT)
                 return
             
             #炳注：下面这句 里面会 设 BREAK_PASS
-            _set_reply_text(res.get("summary") + "\n\n💬 发送 \"开启对话\" 可以开启与文章内容的对话", e_context,
+            #                                     V 原下行此处的文字被去掉：  \n\n💬 发送 \"开启对话\" 可以开启与文章内容的对话
+            _set_reply_text(res.get("summary") + " ", e_context,
                             level=ReplyType.TEXT)
             
             USER_FILE_MAP[_find_user_id(context) + "-sum_id"] = res.get("summary_id")

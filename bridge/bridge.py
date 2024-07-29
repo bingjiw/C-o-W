@@ -143,6 +143,9 @@ class Bridge(object):
         #炳：本函数中 用 self.bots["chat"]["BasicLLM"] 会出错，因为self.bots["chat"]还没创建
         #炳：所以，都要用self.get_bot("chat"), 此函数中若bot还没创建，它会创建
 
+
+        # VVVVVVVVVVVVVVVVV 双答第 1 答 VVVVVVVVVVVVVVVVVV
+
         #默认不用在线上网搜索，预告定义好，以免后面代码出错
         needOnlineSearch = False
 
@@ -152,20 +155,15 @@ class Bridge(object):
         #如果需要 解读 微信的图文分享（公众号、视频号、小程序等）
         needReadWeiXinSHARING = (context.type == ContextType.SHARING)
 
-        #如果需要识图（那么就不用特地问基础LLM并判断要不要上网找答案了）
-        if needRecognizeImage :
-            # 🚩🚩调用：LinkAI
-            self.the_Bot_I_Want = "LinkAI"
-            strQuerySendToLinkAI = f"先描述这张图片整体，再一一描述图片中的所有细节。图中如有文字，写出所有文字。图中如有人物，则分析人物的动作、表情、面容、体态、年纪、服饰、心情。最后参考此图回答问题：{query}"
-            #因LINKAI自带搜索，所以识图的时候 应该也能上网搜索的。
-            BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)        
-            #
-            logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🖼️说明需要识图（3分钟内有上传过图片）")
-            BasicReply.content = "🖼️" + BasicReply.content 
+        #如果需要 总结 上传的文件（"txt", "csv", "docx", "pdf", "md", "jpg", "jpeg", "png"）
+        needSummarizeUploadFile = (context.type == ContextType.FILE)
 
-
-        #如果需要 解读 微信的图文分享（公众号、视频号、小程序等）
-        elif needReadWeiXinSHARING :
+        # 2 组 LINKAI 代码 的分工：
+        # LINKAI插件  组处理：【公众号分享】、文件（"txt", "csv", "docx", "pdf", "md", "jpg", "jpeg", "png"）
+        # LINAAI BOT 组处理： 普通文本、IMAGE图片识别
+        #
+        # 如果是需要 LINKAI插件  组处理的消息：【公众号分享】、文件
+        if needReadWeiXinSHARING or needSummarizeUploadFile :
             #因发现deepseek读到的微信分享页面内容错误，估计微信页面用了些奇怪技术防止机器人读取。所以还是交给LINKAI处理吧，LINKAI已经弄通了微信页面的怪诡计
             # 🚩调用：【LinkAI插件】来处理，而不是LinkAIBot。
             #LinkAI插件可以读到正确的微信的图文分享内容，但LinkAIBot却会读到错误的。
@@ -186,20 +184,35 @@ class Bridge(object):
             ) 
             #
             from plugins import PluginManager
-            e_context = PluginManager().emit_event( e_context )
+            #只为LINKAI插件 产生事件 emit_event
+            e_context = PluginManager().emit_event_ONLY_FOR_PLUGIN_( "LINKAI", e_context )
+            #
             BasicReply = Reply(ReplyType.TEXT)
             BasicReply.content = f"{e_context['reply'].content}"
         
 
+
+        #如果需要 LINKAI BOT 识图（那么就不用特地问基础LLM并判断要不要上网找答案了）
+        elif needRecognizeImage :
+            # 🚩🚩调用：LinkAI
+            self.the_Bot_I_Want = "LinkAI"
+            strQuerySendToLinkAI = f"先描述这张图片整体，再一一描述图片中的所有细节。图中如有文字，写出所有文字。图中如有人物，则分析人物的动作、表情、面容、体态、年纪、服饰、心情。最后参考此图回答问题：{query}"
+            #因LINKAI自带搜索，所以识图的时候 应该也能上网搜索的。
+            BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)        
+            #
+            logger.debug("正在bridge.py - fetch_reply_content函数中：在回答的开头加上🖼️说明需要识图（3分钟内有上传过图片）")
+            BasicReply.content = "🖼️" + BasicReply.content 
+
+
         else :
 
-            #不用识图，则先问基础LLM，再根据回答决定要不要上网搜索。
+            #不用识图，则先问基础LLM，再根据回答决定要不要 用LINK AI BOT上网搜索。
             #炳：先用基础LLM 偿试拿 回复
             context["gpt_model"] = conf().get("BasicLLM")["model"]
-            # 🚩🚩调用：基本LLM
+            # 🚩🚩调用：基本LLM（不是LINKAI BOT）
             self.the_Bot_I_Want = "BasicLLM"
             BasicReply = self.get_bot("chat").reply(query, context)
-
+            #
             text = None if BasicReply is None else BasicReply.content
             analyze_result_string, final_score = analyze_text_features__need_search(text)
             logger.debug("\n" + analyze_result_string)
@@ -215,9 +228,9 @@ class Bridge(object):
                 needOnlineSearch = True
                 strQuerySendToLinkAI = f"上网搜索：{query}"
 
-            #如果需要搜索，则用LINKAI机器人
+            #如果需要搜索，则用LINKAI BOT机器人
             if needOnlineSearch :
-                # 🚩🚩调用：LinkAI
+                # 🚩🚩调用：LinkAI BOT
                 self.the_Bot_I_Want = "LinkAI"
                 BasicReply = self.get_bot("chat").reply(strQuerySendToLinkAI, context)            
                 #
@@ -239,35 +252,50 @@ class Bridge(object):
         #炳：基础LLM没发现 不当敏感内容，则 一问二答，再问高级LLM
         else :
 
+
+
+            # VVVVVVVVVVVVVVVVV 保存LINKAI插件或BOT的问答内容到Session VVVVVVVVVVVVVVVVVV      
+
             # 如果用过LINKAI，就把LINKAI的最近添加的session中的内容copy给BasicLLM一份。
             # 这样 BasicLLM的Session 也能知道【搜索】或【问图】的结果内容, 下次问答时就能用到
-            if needRecognizeImage or needReadWeiXinSHARING or needOnlineSearch :     #不能用这句来判断，因为get_bot后会马上把这个变量改为BasicLLM    if self.the_Bot_I_Want == "LinkAI" :
-                self.the_Bot_I_Want = "BasicLLM"
-                BasicBot = self.get_bot("chat")
-                BasicBot.sessions.session_reply(BasicReply.content, context["session_id"])    
-                logger.debug("把LINKAI的最近添加的session中的内容copy给BasicLLM一份。这样 BasicLLM的Session 也能知道【搜索】或【问图】或【微信图文分享】的结果内容, 下次问答时用户提到与之前相关的内容时LLM就能知道。")
+            if  needSummarizeUploadFile or needReadWeiXinSHARING :    
+                strQueryAddToSession = "总结分享的文章/上传的文件"
+                strAnswerAddToSession = BasicReply.content
+                
+            elif needRecognizeImage or needOnlineSearch : 
+                strQueryAddToSession = strQuerySendToLinkAI
+                strAnswerAddToSession = BasicReply.content
+
+            self.the_Bot_I_Want = "BasicLLM"
+            BasicBot = self.get_bot("chat")
+
+            #把 提问 加入Basic LLM 的 session中
+            BasicBot.sessions.session_query(strQueryAddToSession, context["session_id"])   
+
+            #把 回答 加入Basic LLM 的 session中
+            BasicBot.sessions.session_reply(strAnswerAddToSession, context["session_id"]) 
+
+            logger.debug("把LINKAI插件或BOT的问答内容copy给BasicLLM一份。这样 BasicLLM的Session 也能知道【搜索】或【问图】或【微信图文分享】的结果内容, 下次问答时用户提到与之前相关的内容时LLM就能知道。确保对话的流畅。")
+
+
+            # VVVVVVVVVVVVVVVVV 双答第 2 答 VVVVVVVVVVVVVVVVVV      
+
+            if needReadWeiXinSHARING or needSummarizeUploadFile :
+                #【微信图文分享】直接让高级LLM评价上面的BasicLLM（LINKAI）读到的【微信图文分享】内容
+                strQueryToLLM = f"“{BasicReply.content}”\n\n如果以上“”中的内容是纯数据或不含任何观点，则推测内容的出处与用途。否则评论它的观点并指出你不认同的部分，或找出文章的缺点、错误。"
 
             if needRecognizeImage :
-                # #把【图像识别的内容】也给AdvanLLM的Session知道一下,以便后面顺畅自然的问答
-                # self.the_Bot_I_Want = "AdvanLLM"
-                # AdvanBot = self.get_bot("chat")
-                # AdvanBot.sessions.session_reply(BasicReply.content, context["session_id"])
-                # logger.debug("把【图像识别的结果答案】也给AdvanLLM的Session知道一下,以便后面顺畅自然的问答")
-                #
-                # 直接让高级LLM根据上面的BasicLLM（LINKAI）识别出的图片的文字描述，来回答问题
-                strQueryToLLM = f"“{BasicReply.content}”\n\n根据以上对某图片的文字描述，回答问题：\n\n{query}"                    
-
-            if needReadWeiXinSHARING :
-                #【微信图文分享】直接让高级LLM评价上面的BasicLLM（LINKAI）读到的【微信图文分享】内容
-                strQueryToLLM = f"对以下内容发表你的看法：\n\n“{BasicReply.content}”"
+                # 直接让高级LLM根据上面的BasicLLM（LINKAI）识别出的图片的文字描述，来回答问题。
+                # 就不需要特地再把 第1答的答案 存入高级LLM的Session了
+                strQueryToLLM = f"“{BasicReply.content}”\n\n根据以上“”中的对某图片的文字描述，回答问题：\n\n{query}"                    
+                # 因得到了识图的文字答案，所以AdvanLLM也能仅通过识图的答案文字来回答用户的问题 
+                # (看不到图，仅通过听到对图的描述 来“盲答”用户的问题)
 
             else :
                 strQueryToLLM = query
         
 
             #炳：再用高级LLM拿到回复，
-            # 因得到了识图的文字答案，所以AdvanLLM也能仅通过识图的答案文字来回答用户的问题 
-            # (看不到图，仅通过听到对图的描述 来“盲答”用户的问题)
             context["gpt_model"] = conf().get("AdvanLLM")["model"]
             # 🚩🚩调用：高级LLM
             self.the_Bot_I_Want = "AdvanLLM"

@@ -222,14 +222,14 @@ class ChatChannel(Channel):
         # 消息内容匹配过程，并处理content
         nick_name_black_list = conf().get("nick_name_black_list", [])
         from_user_nick_name = context["msg"].from_user_nickname
-        if (                                            # 如发来的是  语音 或 图片，且是黑名单中的人，则忽略跳过
-            (context.type == ContextType.VOICE or context.type == ContextType.IMAGE) and       
+        if (                                            # 如发来的是  语音、图片、文件、公众号分享，且是黑名单中的人，则忽略跳过
+            (context.type == ContextType.VOICE or context.type == ContextType.IMAGE or context.type == ContextType.FILE or context.type == ContextType.SHARING) and       
             not context.get("isgroup", False) and       # 且是单聊（不是群聊）
             from_user_nick_name and                     # 且发送者有呢称
             from_user_nick_name in nick_name_black_list # 且发送者呢称在黑名单中
         ):
             # 黑名单过滤
-            logger.warning(f"chat_channel.py - _handle()中：黑名单中的人单聊发来语音，来者呢称'{from_user_nick_name}'在config.json配置的黑名单nick_name_black_list中，忽略（跳过，不处理），避免原代码的浪费去做语音识别")
+            logger.warning(f"chat_channel.py - _handle()中：黑名单中的人单聊发来【语音、图片、文件、公众号分享】，来者呢称'{from_user_nick_name}'在config.json配置的黑名单nick_name_black_list中，忽略（跳过，不处理），避免原代码的浪费去做语音识别等")
             return
         #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
@@ -249,6 +249,7 @@ class ChatChannel(Channel):
 
 
     def _generate_reply(self, context: Context, reply: Reply = Reply()) -> Reply:
+
         #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
         #《《《《 把 EventContext 的构建从原 紧凑 代码中 提取到外面，放到前面来，
         #《《《《 以便后面的reply = e_context["reply"]要用到
@@ -257,16 +258,20 @@ class ChatChannel(Channel):
             {"channel": self, "context": context, "reply": reply},
         )
 
-
-        #若 不是微信分享，才去产生（EMIT）事件给插件处理。使微信分享时不会被插件在此提前处理
-        if not context.type == ContextType.SHARING :
-            e_context = PluginManager().emit_event( e_context )
-        #炳最新 恢复每次都产生事件的原因：为了要利用Godcmd的 #stop #resume 功能，
-        # 需要每次都产生事件，才能由Godcmd插件来决定根据当前 isRunning 的状态要不要后面的流程继续走下去
+        # 有 2个地方可产生（EMIT）此事件：此处 与 bridge 中
+        # 此处产生事件 不受炳的流程控制，执行流程会被插件抢走（抢走后不再走炳的流程），此处适合如：Godcmd
+        # bridge中产生事件 受炳的流程控制，适合让LINKAI插件处理事件后得到所要的【识别、总结】结果
         #
-        # 以下是炳的旧代码： 只在【输入消息是#开头指令】，才产生事件emit_event。 
-        # if (context.content.startswith("#")) :
-        #     e_context = PluginManager().emit_event( e_context )        
+        #所以，此处只要激发Godcmd插件的事件处理即可，不用激发其他的插件
+        #产生（EMIT）事件 只给GODCMD插件处理
+        e_context = PluginManager().emit_event_ONLY_FOR_PLUGIN_( "GODCMD", e_context )
+        #
+        # 炳注：每次都产生事件的原因：为了要利用Godcmd的 #stop #resume 功能，
+        #       Godcmd 用 #stop #resume 暂停整个 C-o-W 的原理： 
+        #       若 Godcmd 中的 isRunning 是 False（即 服务已暂停），则所有事件都“忽略跳过” BREAK_PASS
+        #       所以 若要用 Godcmd 的暂停服务的功能，就必须每条接收到的消息都经Godcmd的事件处理走一遍
+        # 需要每次都产生事件，才能由Godcmd插件来决定根据当前 isRunning 的状态要不要后面的流程继续走下去
+        #  
         # #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
         
 
@@ -326,12 +331,13 @@ class ChatChannel(Channel):
                     
                     else:
                         return
-            elif context.type == ContextType.IMAGE:  # 图片消息，当前仅做下载保存到本地的逻辑
+                    
 
+            elif context.type == ContextType.IMAGE:  # 图片消息，当前仅做下载保存到本地的逻辑
                 
                 #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
                 #炳：应在这里跟用户说“收到图片，可在3分钟内问询与图片相关的问题”
-                #   如果是  单聊（不是群聊）  才说 “收到一张图片。。。
+                #   如果是  单聊（不是群聊）  才说 “收到一张图片。。。。   群聊就静悄悄地存好图片（不发声）
                 if not context.get("isgroup", False) :
                     context["channel"] = e_context["channel"]
                     #如果上一张图还没有问答处理掉，又来一张图（一次发了多张图）
