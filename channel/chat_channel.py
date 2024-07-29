@@ -298,7 +298,7 @@ class ChatChannel(Channel):
 
                 #炳加：
                 #如果是对 图片、语音、其他怪的引用 全都 回复 “我看不到你引用的内容”
-                prefixes = ("「[图片]」", "「[该消息类型暂不能展示]」", "「[视频]」")
+                prefixes = ("「[图片]」", "「[该消息类型暂不能展示]」", "「[视频]」", "「[文件]")
                 strReceivedMsg = context.content
                 logger.debug(f"如果是对 图片、语音、其他怪的引用 全都 回复 “我看不到你引用的内容”，收到消息【{strReceivedMsg}】")
                 if strReceivedMsg.startswith(prefixes):
