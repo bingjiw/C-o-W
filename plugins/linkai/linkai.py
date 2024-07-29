@@ -49,7 +49,9 @@ class LinkAI(Plugin):
             # filter content no need solve
             return
 
-        #文件 或 图片
+
+        #文件 或 图片 
+        #文件 或 图片 (其实主要是 文件，只不过原代码 是 文件或图片，没改它罢了。)
         if context.type in [ContextType.FILE, ContextType.IMAGE] and self._is_summary_open(context):
             # 文件处理
             context.get("msg").prepare()
@@ -57,7 +59,10 @@ class LinkAI(Plugin):
 
             #遇到 不支持的文件，提前退出
             if not LinkSummary().check_file(file_path, self.sum_config):
-                _send_info(e_context, "只能解读小于 5 MB 的 txt, csv, docx, pdf, md, jpg, jpeg, png 文件")
+                #统一不在插件内给用户回话。_send_info(e_context, "只能解读小于 5 MB 的 txt, csv, docx, pdf, md, jpg, jpeg, png 文件")
+                #
+                #设置返回结果内容。炳用 reply的ReplyType.ERROR表示: 内部遇到不支持的内容类型（如视频号或其他文件后缀），中途退出，无需后续处理。
+                ReplyErrorMsg_and_BREAK_PASS("只能解读小于 5 MB 的 txt, csv, docx, pdf, md, jpg, jpeg, png 文件", e_context)
                 return
             
             #收到文件
@@ -67,21 +72,31 @@ class LinkAI(Plugin):
             res = LinkSummary().summary_file(file_path)
             if not res:
                 if context.type != ContextType.IMAGE:
-                    _set_reply_text("处理出错，因为神秘力量无法获取内容，请稍后再试吧", e_context, level=ReplyType.TEXT)
+                    #设置返回结果内容。炳用 reply的ReplyType.ERROR表示: 内部遇到不支持的内容类型（如视频号或其他文件后缀），中途退出，无需后续处理。
+                    ReplyErrorMsg_and_BREAK_PASS("试图总结文件时出错，因为神秘力量无法获取内容，请稍后再试吧", e_context)
+                    
                 return
+            
             summary_text = res.get("summary")
+            
             if context.type != ContextType.IMAGE:
                 USER_FILE_MAP[_find_user_id(context) + "-sum_id"] = res.get("summary_id")
-                summary_text += "\n\n💬 发送 \"开启对话\" 可以开启与文件内容的对话"
+                #炳暂不支持这个功能：summary_text += "\n\n💬 发送 \"开启对话\" 可以开启与文件内容的对话"
+            
             _set_reply_text(summary_text, e_context, level=ReplyType.TEXT)
+            
             os.remove(file_path)
+            
             return
 
+
+        #公众号分享 或 总结文件
+        #公众号分享 或 总结文件
         if (context.type == ContextType.SHARING and self._is_summary_open(context)) or \
                 (context.type == ContextType.TEXT and self._is_summary_open(context) and LinkSummary().check_url(context.content)):
             
             if not LinkSummary().check_url(context.content):
-                _send_info(e_context, "暂不支持：小程序分享、视频号分享。\n\n我可以总结公众号文章分享")
+                ReplyErrorMsg_and_BREAK_PASS("暂不支持：小程序分享、视频号分享。\n\n我可以总结公众号文章分享", e_context)
                 return
             
             _send_info(e_context, "收到 公众号分享，正在生成摘要，请稍后...\n\n（暂不支持：小程序分享、视频号分享）")
@@ -89,13 +104,12 @@ class LinkAI(Plugin):
             res = LinkSummary().summary_url(context.content)
             
             if not res:
-                _set_reply_text("（公众号文章）因为神秘力量无法获取文章内容，请稍后再试吧~", e_context, level=ReplyType.TEXT)
+                ReplyErrorMsg_and_BREAK_PASS("（公众号文章）因为神秘力量无法获取文章内容，请稍后再试吧~", e_context)
                 return
             
             #炳注：下面这句 里面会 设 BREAK_PASS
             #                                     V 原下行此处的文字被去掉：  \n\n💬 发送 \"开启对话\" 可以开启与文章内容的对话
-            _set_reply_text(res.get("summary") + " ", e_context,
-                            level=ReplyType.TEXT)
+            _set_reply_text(res.get("summary") + " ", e_context, level=ReplyType.TEXT)
             
             USER_FILE_MAP[_find_user_id(context) + "-sum_id"] = res.get("summary_id")
             return
@@ -298,6 +312,11 @@ def _set_reply_text(content: str, e_context: EventContext, level: ReplyType = Re
     reply = Reply(level, content)
     e_context["reply"] = reply
     e_context.action = EventAction.BREAK_PASS
+
+
+#炳 常用函数：回复错误消息，并设BREAK_PASS
+def ReplyErrorMsg_and_BREAK_PASS(contentMsg: str, e_context: EventContext):
+    _set_reply_text(contentMsg, e_context, ReplyType.ERROR)
 
 
 def _get_trigger_prefix():

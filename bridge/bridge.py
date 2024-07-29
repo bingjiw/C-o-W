@@ -3,7 +3,6 @@
 #《《《《《 判断 AI回复的文本 决定要不要实时搜索
 from channel.ANSWER_APOLOGY import analyze_text_features__need_search
 
-
 from bot.bot_factory import create_bot
 from bridge.context import Context,ContextType
 from bridge.reply import Reply,ReplyType
@@ -15,6 +14,8 @@ from translate.factory import create_translator
 from voice.factory import create_voice
 from common import memory
 from bot.chatgpt.chat_gpt_bot import ChatGPTBot 
+
+from plugins import *
 
 @singleton
 class Bridge(object):
@@ -171,7 +172,6 @@ class Bridge(object):
             #LinkAI插件：处理 上传文档、总结微信分享、特殊的群聊映射LINKAI应用等
             #LinkAIBot：处理 普通文本对话
 
-
             from plugins import EventContext, Event
             #
             #因下面的EventContext需要Reply()对象，所以就给它造一个
@@ -186,13 +186,17 @@ class Bridge(object):
             from plugins import PluginManager
             #只为LINKAI插件 产生事件 emit_event
             e_context = PluginManager().emit_event_ONLY_FOR_PLUGIN_( "LINKAI", e_context )
+            reply = e_context['reply']
             #
-            # 某些不支持的分享，会返回None
-            if e_context is None :
-                return
+            # 炳用 reply的ReplyType.ERROR表示，内部遇到不支持的内容，中途退出，无需后续处理。
+            # 某些不支持的分享，e_context会返回None
+            if reply.type == ReplyType.ERROR :
+                BasicReply = Reply(ReplyType.ERROR)
+                BasicReply.content = f"🙁{reply.content}"
+                return BasicReply #提前结束，后面的 2答等 不用执行了。
             else :
                 BasicReply = Reply(ReplyType.TEXT)
-                BasicReply.content = f"{e_context['reply'].content}"
+                BasicReply.content = f"{reply.content}"
         
 
 
@@ -309,7 +313,7 @@ class Bridge(object):
             AdvanReply = self.get_bot("chat").reply(strQueryToLLM, context)
 
             #炳：合并2个回复 到一个回复中
-            BasicReply.content = f"{BasicReply.content}\n━━━━━━━━\n\n👽{AdvanReply.content}"
+            BasicReply.content = f"{BasicReply.content}\n━━━━━━━\n\n👽{AdvanReply.content}"
         
         return BasicReply
 

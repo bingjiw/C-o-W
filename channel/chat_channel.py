@@ -34,6 +34,13 @@ except Exception as e:
 handler_pool = ThreadPoolExecutor(max_workers=8)  # 处理消息的线程池
 
 
+#此函数不属于类
+def _send_info(e_context: EventContext, content: str):
+    reply = Reply(ReplyType.TEXT, content)
+    channel = e_context["channel"]
+    channel.send(reply, e_context["context"])
+
+
 # 抽象类, 它包含了与消息通道无关的通用处理逻辑
 class ChatChannel(Channel):
     name = None  # 登录的用户名
@@ -237,14 +244,20 @@ class ChatChannel(Channel):
         # reply的构建步骤        
         reply = self._generate_reply(context)
         
-        logger.debug("[chat_channel] ready to decorate reply: {}".format(reply))
-
-        # reply的包装步骤
-        if reply and reply.content:
-            reply = self._decorate_reply(context, reply)
-
-            # reply的发送步骤
+        # 如有些文件类型无法处理或超过大小，或视频号分享 等 暂不支持的类型消息，就会返回 ReplyType.ERROR
+        if reply.type == ReplyType.ERROR :
             self._send_reply(context, reply)
+            return
+
+        else :
+            logger.debug("[chat_channel] ready to decorate reply: {}".format(reply))
+
+            # reply的包装步骤
+            if reply and reply.content:
+                reply = self._decorate_reply(context, reply)
+
+                # reply的发送步骤
+                self._send_reply(context, reply)
 
 
 
@@ -320,6 +333,9 @@ class ChatChannel(Channel):
 
                 #前面把语音变成文字后，再调用一遍自己（把消息当作文本来处理并调用）自己本身这个函数_generate_reply
                 if reply.type == ReplyType.TEXT:
+                    #语音识别后，给用户一个回馈，以免用户等得不耐烦（3次调用很费时：语音+1答+2答）
+                    _send_info(e_context, f"收到语音🗣️：“{reply.content}”。思考如何答你...")
+
                     new_context = self._compose_context(ContextType.TEXT, reply.content, **context.kwargs)
                     if new_context:
                         # 重复调用函数自己： 在_generate_reply函数中调用_generate_reply函数自己
@@ -456,7 +472,7 @@ class ChatChannel(Channel):
                     if len(reply_text) > 270 :
                         # 使用函数 安全地获取 随机提示
                         hint = get_safe_random_hint(conf)
-                        reply_text = f"{reply_text}\n━━━━━━━━\n\n👨🏻‍🔧{hint}"
+                        reply_text = f"{reply_text}\n━━━━━━━\n\n👨🏻‍🔧{hint}"
                     # 》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
 
                     reply.content = reply_text
