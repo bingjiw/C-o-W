@@ -86,12 +86,17 @@ class LinkSummary:
         if not url:
             return False
         support_list = ["http://mp.weixin.qq.com", "https://mp.weixin.qq.com"]
-        black_support_list = ["https://mp.weixin.qq.com/mp/waerrpage"]
+
+        #视频号会拿到这个URL，不支持：https://support.weixin.qq.com/security/readtemplate?t=w_security_center_website/upgrade
+        black_support_list = ["https://mp.weixin.qq.com/mp/waerrpage", "https://support.weixin.qq.com/security/"]
+        
         for black_url_prefix in black_support_list:
             if url.strip().startswith(black_url_prefix):
                 logger.warn(f"[LinkSum] unsupported url, no need to process, url={url}")
                 return False
+        
         for support_url in support_list:
             if url.strip().startswith(support_url):
                 return True
+            
         return False
