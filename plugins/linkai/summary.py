@@ -74,7 +74,7 @@ class LinkSummary:
             return False
 
         #support_list中全是小写，所以把后缀文件名转成小写，以便比较匹配
-        suffix = file_path.split(".")[-1].lower
+        suffix = file_path.split(".")[-1].lower()
         support_list = ["txt", "csv", "docx", "pdf", "md", "jpg", "jpeg", "png"]
         if suffix not in support_list:
             logger.warn(f"[LinkSum] unsupported file, suffix={suffix}, support_list={support_list}")
