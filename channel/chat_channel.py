@@ -302,12 +302,13 @@ class ChatChannel(Channel):
                 strReceivedMsg = context.content
                 logger.debug(f"如果是对 图片、语音、其他怪的引用 全都 回复 “我看不到你引用的内容”，收到消息【{strReceivedMsg}】")
                 if strReceivedMsg.startswith(prefixes):
-                    reply = Reply(ReplyType.TEXT, "🙁我看不见你引用的内容（引用内容暂不支持：视频号、视频、图片）。\n\n我只能看见对文字消息的引用。\n\n如果是图片，请重发图片，随后再问我与图片相关的问题。")
-                else :
-                    reply = super().build_reply_content(context.content, context)
-                    #炳注：其实以上这句才是真正让bot去调用LLM回答的命令，
-                    # _generate_reply 本身只是一个空壳子：其最重要的工作就是把语音变成文本后再调用一次自己
-                    # （其实还是在第2次调用时 通过上面这句 发到LLM的）
+                    _send_info(e_context, "看不了消息中的引用：\n❎视频号引用\n❎视频引用\n❎图片引用）。\n\n我能看见：\n✅文字消息引用\n\n如引用的是图片，请重发图片本身，我看见后，再问我与图片相关的问题。\n\n正在（看不了引用的情况下）尝试回答你...")
+
+                #即使看不见引用，也试图回答用户
+                reply = super().build_reply_content(context.content, context)
+                #炳注：其实以上这句才是真正让bot去调用LLM回答的命令，
+                # _generate_reply 本身只是一个空壳子：其最重要的工作就是把语音变成文本后再调用一次自己
+                # （其实还是在第2次调用时 通过上面这句 发到LLM的）
 
             # 如果是 语音消息
             elif context.type == ContextType.VOICE:  
