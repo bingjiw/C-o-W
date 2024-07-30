@@ -7,11 +7,6 @@
 __pycache__/
 venv*
 *.pyc
-config.json
-!plugins/config.json
-!plugins/linkai/config.json
-config.测试.json
-config.生产.json
 QR.png
 nohup.out
 tmp
@@ -34,3 +29,10 @@ plugins/banwords/lib/__pycache__
 !plugins/keyword
 !plugins/linkai
 client_config.json
+config.json
+config.测试.json
+config.生产.json
+!plugins/config.json
+!plugins/linkai/config.json
+!plugins/plugin_summary
+!plugins/plugin_summary/**/
