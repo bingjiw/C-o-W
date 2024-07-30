@@ -311,6 +311,9 @@ class ChatChannel(Channel):
                 logger.debug(f"如果是对 图片、语音、其他怪的引用 全都 回复 “我看不到你引用的内容”，收到消息【{strReceivedMsg}】")
                 if strReceivedMsg.startswith(prefixes):
                     _send_info(e_context, "看不了消息中的：\n❎视频号引用\n❎视频引用\n❎图片引用\n❎语音引用\n\n我能看见：\n✅文字消息引用\n\n如引用的是图片，请重发图片本身，我看见后，再问我与图片相关的问题。\n\n正在（看不了引用的情况下）尝试回答你...")
+                    #发给LLM前 ，删除 [该消息类型暂不能展示] 这样的话，以免误导LLM
+                    for prefix in prefixes:
+                        context.content = context.content.removeprefix(prefix)
 
                 #即使看不见引用，也试图回答用户
                 reply = super().build_reply_content(context.content, context)
