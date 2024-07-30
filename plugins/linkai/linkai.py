@@ -96,7 +96,7 @@ class LinkAI(Plugin):
                 (context.type == ContextType.TEXT and self._is_summary_open(context) and LinkSummary().check_url(context.content)):
             
             if not LinkSummary().check_url(context.content):
-                ReplyErrorMsg_and_BREAK_PASS("收到我看不懂的：\n❎小程序分享\n❎视频号分享\n\n请发我能看懂的：\n✅公众号文章分享", e_context)
+                ReplyErrorMsg_and_BREAK_PASS("收到我看不懂的：\n❎小程序分享\n❎视频号分享\n\n请发我能看懂的：\n✅微信公众号分享", e_context)
                 return
             
             _send_info(e_context, "收到：\n✅公众号分享\n正在阅读...")
