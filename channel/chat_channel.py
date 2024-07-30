@@ -180,6 +180,7 @@ class ChatChannel(Channel):
                             pattern = f"@{re.escape(context['msg'].self_display_name)}(\u2005|\u0020)"
                             subtract_res = re.sub(pattern, r"", content)
                         content = subtract_res
+                        logger.info(f"群聊中收到一条消息，删除所有 @ 之后的内容是：{content}")
                 if not flag:
                     if context["origin_ctype"] == ContextType.VOICE:
                         logger.info("[chat_channel]receive group voice, but checkprefix didn't match")
