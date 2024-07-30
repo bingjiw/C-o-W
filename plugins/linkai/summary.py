@@ -97,9 +97,11 @@ class LinkSummary:
         
         #像这种小红书分享：type=SHARING, content=https://www.xiaohongshu.com/discovery/item/66a82644000000002701fa34?app_platform=android&amp;ignoreEngage=true&amp;app_version=8.46.0&amp;share_from_user_hidden=true&amp;xsec_source=app_share&amp;type=video&amp;xsec_token=CBI_48vuJ84rJA2UAch-ZQfl8U9TeckxWggVqeLRMFfg4=&amp;author_share=1&amp;xhsshare=WeixinSession&amp;shareRedId=Nzw2MThIOUFHPjpFQj01N0xHOUo0Ozg8&amp;apptime=1722322930&amp;share_id=7242082c28204d36a61a2e6f6f01389b,
         #并非 mp.weixin.qq开头的
-        return True
-        # for support_url in support_list:
-        #     if url.strip().startswith(support_url):
-        #         return True
-            
-        #return False
+        #结果LinkAI插件不支持小红书等的：[LinkSum] url summary, res={'success': False, 'code': 428, 'message': 'Unsupported url type', 'data': None}
+        #return True
+        
+        for support_url in support_list:
+            if url.strip().startswith(support_url):
+                return True
+        #    
+        return False
