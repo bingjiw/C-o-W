@@ -8,9 +8,9 @@
             "enabled": true,
             "priority": 99
         },
-        "plugin_summary": {
+        "summary": {
             "enabled": true,
-            "priority": 9
+            "priority": -1
         }
     }
 }
