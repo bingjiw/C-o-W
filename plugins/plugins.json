@@ -7,6 +7,10 @@
         "linkai": {
             "enabled": true,
             "priority": 99
+        },
+        "plugin_summary": {
+            "enabled": true,
+            "priority": 9
         }
     }
 }
