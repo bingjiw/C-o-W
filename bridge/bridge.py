@@ -292,7 +292,7 @@ class Bridge(object):
 
             if needReadWeiXinSHARING or needSummarizeUploadFile :
                 #【微信图文分享】直接让高级LLM评价上面的BasicLLM（LINKAI）读到的【微信图文分享】内容
-                strQueryToLLM = f"“{BasicReply.content}”\n\n如果以上“”中的内容是纯数据或不含任何观点，则推测内容的出处与用途。否则评论它的观点并指出你不认同的部分，或找出文章的缺点、错误。"
+                strQueryToLLM = f"“{BasicReply.content}”\n\n评论以上“”中的内容，并指出你不认同的部分，或找出文章的缺点、错误。"
 
             elif needRecognizeImage :
                 # 直接让高级LLM根据上面的BasicLLM（LINKAI）识别出的图片的文字描述，来回答问题。
