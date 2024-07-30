@@ -334,7 +334,7 @@ class ChatChannel(Channel):
                 #前面把语音变成文字后，再调用一遍自己（把消息当作文本来处理并调用）自己本身这个函数_generate_reply
                 if reply.type == ReplyType.TEXT:
                     #语音识别后，给用户一个回馈，以免用户等得不耐烦（3次调用很费时：语音+1答+2答）
-                    _send_info(e_context, f"🗣️你说：\n“{reply.content}”\n\n思考如何答你...")
+                    _send_info(e_context, f"你说：\n\n“{reply.content}”\n\n思考如何答你...")
 
                     new_context = self._compose_context(ContextType.TEXT, reply.content, **context.kwargs)
                     if new_context:
