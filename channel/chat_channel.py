@@ -181,6 +181,7 @@ class ChatChannel(Channel):
                             subtract_res = re.sub(pattern, r"", content)
                         content = subtract_res
                         logger.info(f"群聊中收到一条消息，删除所有 @ 之后的内容是：{content}")
+
                 if not flag:
                     if context["origin_ctype"] == ContextType.VOICE:
                         logger.info("[chat_channel]receive group voice, but checkprefix didn't match")
@@ -189,7 +190,7 @@ class ChatChannel(Channel):
                 nick_name = context["msg"].from_user_nickname
                 if nick_name and nick_name in nick_name_black_list:
                     # 黑名单过滤
-                    # 这里是第2次黑名单过滤，第1次过滤 滤：语音与图片
+                    # 这里是第2次黑名单过滤，滤文字类。      第1次过滤 滤：语音与图片
                     logger.warning(f"[chat_channel] Nickname '{nick_name}' in In BlackList, ignore")
                     return None
 
@@ -202,18 +203,24 @@ class ChatChannel(Channel):
                     return None
             content = content.strip()
             img_match_prefix = check_prefix(content, conf().get("image_create_prefix",[""]))
+            
             if img_match_prefix:
                 content = content.replace(img_match_prefix, "", 1)
                 context.type = ContextType.IMAGE_CREATE
             else:
-                context.type = ContextType.TEXT
+                context.type = ctype  #需保持可能的SHARING类型，原句会把SHARING强变成TEXT，有误，故改之。  ContextType.TEXT
+
             context.content = content.strip()
             if "desire_rtype" not in context and conf().get("always_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context["desire_rtype"] = ReplyType.VOICE
+        
         elif context.type == ContextType.VOICE:
             if "desire_rtype" not in context and conf().get("voice_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context["desire_rtype"] = ReplyType.VOICE
+        
         return context
+
+
 
     def _handle(self, context: Context):
         if context is None or not context.content:
@@ -392,7 +399,7 @@ class ChatChannel(Channel):
                 #
                 #以下2句是从最前面的TEXT的处理方法处抄来的
                 context["channel"] = e_context["channel"] #不知何意，照抄之
-                #因Deepseek及gpt-4o已有总结链接的能力，所以直接让它们总结链接即可。
+                #下一句会在bridge中激发 LINKAI插件事件来处理
                 reply = super().build_reply_content(f"{context.content}", context)
                 # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
                 
