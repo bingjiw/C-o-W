@@ -185,7 +185,7 @@ class Bridge(object):
             #
             from plugins import PluginManager
             #只为LINKAI插件 产生事件 emit_event
-            e_context = PluginManager().emit_event_ONLY_FOR_PLUGIN_( "LINKAI", e_context )
+            e_context = PluginManager().emit_event_ONLY_FOR_PLUGIN_( ["LINKAI"], e_context )
             reply = e_context['reply']
             #
             # 炳用 reply的ReplyType.ERROR表示，内部遇到不支持的内容，中途退出，无需后续处理。

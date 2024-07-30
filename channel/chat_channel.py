@@ -284,8 +284,8 @@ class ChatChannel(Channel):
         # bridge中产生事件 受炳的流程控制，适合让LINKAI插件处理事件后得到所要的【识别、总结】结果
         #
         #所以，此处只要激发Godcmd插件的事件处理即可，不用激发其他的插件
-        #产生（EMIT）事件 只给GODCMD插件处理
-        e_context = PluginManager().emit_event_ONLY_FOR_PLUGIN_( "GODCMD", e_context )
+        #产生（EMIT）事件 只给 【GODCMD插件】与【群聊总结插件】 处理
+        e_context = PluginManager().emit_event_ONLY_FOR_PLUGIN_( ["GODCMD", "SUMMARY"], e_context )
         #
         # 炳注：每次都产生事件的原因：为了要利用Godcmd的 #stop #resume 功能，
         #       Godcmd 用 #stop #resume 暂停整个 C-o-W 的原理： 
