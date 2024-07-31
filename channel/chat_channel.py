@@ -336,8 +336,15 @@ class ChatChannel(Channel):
                 except Exception as e:  # 转换失败，直接使用mp3，对于某些api，mp3也可以识别
                     logger.warning("[chat_channel]any to wav error, use raw path. " + str(e))
                     wav_path = file_path
+                
                 # 语音识别
                 reply = super().build_voice_to_text(wav_path)
+                
+                # 如果语音识别失败，
+                if reply.type == ReplyType.ERROR or reply.content == "":
+                    _send_info(e_context, f"语音识别失败，无法识别你说的话\n\n请发文字消息提问")
+                    return
+
                 # 删除临时文件
                 try:
                     os.remove(file_path)
