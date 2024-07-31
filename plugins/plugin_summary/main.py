@@ -132,6 +132,12 @@ class Summary(Plugin):
         # logger.debug("[Summary] {}:{} ({})" .format(username, context.content, session_id))
 
     def _translate_text_to_commands(self, text):
+
+        #炳加 以免出错：[main.py:251] - [Summary] translate failed: Did not find llm_api_key, please add an environment variable LLM_API_KEY which contains it, or pass llm_api_key as a named parameter.
+        os.environ["LLM_API_KEY"] = conf().get("open_ai_api_key", "")  # 必填
+        os.environ["PROXY"] = "http://10.104.0.4:3000"            # .0.4 是测试机的地址 选填
+        os.environ["MODEL_NAME"] = "gpt-4o-mini"                   # 选填
+
         llm = ModelFactory().create_llm_model(**build_model_params({
             "openai_api_key": conf().get("open_ai_api_key", ""),
             "proxy": conf().get("proxy", ""),
