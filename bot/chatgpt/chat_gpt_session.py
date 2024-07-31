@@ -20,6 +20,7 @@ class ChatGPTSession(Session):
         #炳：若是BasicLLM、AdvanLLM则拿各自特定的system_prompt
         if (system_prompt is None) and (model in ["BasicLLM", "AdvanLLM"]):
             system_prompt = conf().get(model)["system_prompt"]
+        #当群聊总结插件给传入system_prompt时，以传入的system_prompt为准，不去覆盖它
         #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
         super().__init__(session_id, system_prompt)
