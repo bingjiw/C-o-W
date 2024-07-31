@@ -18,7 +18,7 @@ class ChatGPTSession(Session):
         
         #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
         #炳：若是BasicLLM、AdvanLLM则拿各自特定的system_prompt
-        if model in ["BasicLLM", "AdvanLLM"]:
+        if (system_prompt is None) and (model in ["BasicLLM", "AdvanLLM"]):
             system_prompt = conf().get(model)["system_prompt"]
         #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
