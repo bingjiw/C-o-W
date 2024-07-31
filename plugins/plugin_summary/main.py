@@ -243,7 +243,7 @@ class Summary(Plugin):
                 if match:
                     limit = int(match.group())
                     if limit > 300:
-                        replyMax300Hint = "免费版一次最多总结300条消息，若要更多联系技术员 bingjiw"
+                        replyMax300Hint = "\n\n免费版一次最多总结300条消息，更多联系技术员 bingjiw"
                         limit = 300
                     logger.debug(f"[群聊总结插件Summary] 要总结的消息条数 limit 是: {limit}  {replyMax300Hint}")
 
@@ -316,7 +316,7 @@ class Summary(Plugin):
 
 
             if len(summarys) == 1:
-                reply = Reply(ReplyType.TEXT, f"本次总结了{count}条消息。\n\n"+summarys[0])
+                reply = Reply(ReplyType.TEXT, f"本次总结了{count}条消息。\n\n"+summarys[0]+replyMax300Hint)
                 e_context['reply'] = reply
                 e_context.action = EventAction.BREAK_PASS
                 return
