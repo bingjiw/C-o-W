@@ -101,8 +101,12 @@ class Summary(Plugin):
         cmsg : ChatMessage = e_context['context']['msg']
         username = None
         session_id = cmsg.from_user_id
-        if conf().get('channel_type', 'wx') == 'wx' and cmsg.from_user_nickname is not None:
-            session_id = cmsg.from_user_nickname # itchat channel id会变动，只好用群名作为session id
+        #炳注：故意要用群聊的session_id, 如 from_user_id=@@eb2a473f16ff421b65d17d8b04be8f6481b33d2340dab471cc51a0d51bb965a1
+        #（因为此插件用的其实就是BasicLLM，只要session_id一致后，BasicLLM就能拿到这里存的问答内容）
+        #这样在下面的session.add_query时，会把 要总结的消息 加入到 BasicLLM 中，以让BasicLLM了解插件的问答，保持连贯性。
+        #且炳用了hot_reload后，session_ID（群聊ID）变的机会不多，只要不重新扫码就一直不会变。    
+            # if conf().get('channel_type', 'wx') == 'wx' and cmsg.from_user_nickname is not None:
+            #     session_id = cmsg.from_user_nickname # itchat channel id会变动，只好用群名作为session id
 
         if context.get("isgroup", False):
             username = cmsg.actual_user_nickname
@@ -287,6 +291,7 @@ class Summary(Plugin):
             msg:ChatMessage = e_context['context']['msg']
             session_id = msg.from_user_id
             #炳注：故意要用群聊的session_id, 如 from_user_id=@@eb2a473f16ff421b65d17d8b04be8f6481b33d2340dab471cc51a0d51bb965a1
+            #（因为此插件用的其实就是BasicLLM，只要session_id一致后，BasicLLM就能拿到这里存的问答内容）        
             #这样在下面的session.add_query时，会把 要总结的消息 加入到 BasicLLM 中，以让BasicLLM了解插件的问答，保持连贯性。
             #且炳用了hot_reload后，session_ID（群聊ID）变的机会不多，只要不重新扫码就一直不会变。
                 # if conf().get('channel_type', 'wx') == 'wx' and msg.from_user_nickname is not None:
