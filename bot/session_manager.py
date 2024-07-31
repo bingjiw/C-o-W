@@ -49,20 +49,27 @@ class SessionManager(object):
         self.sessioncls = sessioncls
         self.session_args = session_args
 
-    #炳注：其实叫get_session更合适，因如果session_id已存在，则返回此session对象，并没创建新的
+
+    #炳注：其实叫 get_session 更合适，因如果session_id已存在，则返回此session对象，并没创建新的
     def build_session(self, session_id, system_prompt=None):
         """
         如果session_id不在sessions中，创建一个新的session并添加到sessions中
         如果system_prompt不会空，会更新session的system_prompt并重置session
         """
+        # 如果session_id为None，创建一个新的session
         if session_id is None:
             return self.sessioncls(session_id, system_prompt, **self.session_args)
 
+        # 如果session_id不在sessions中，创建一个新的session并添加到sessions中
         if session_id not in self.sessions:
             self.sessions[session_id] = self.sessioncls(session_id, system_prompt, **self.session_args)
+
+        # 如果 传入的system_prompt有内容，会更新session的system_prompt并重置session
         elif system_prompt is not None:  # 如果有新的system_prompt，更新并重置session
             self.sessions[session_id].set_system_prompt(system_prompt)
+
         session = self.sessions[session_id]
+
         return session
 
     #炳注：把 提问 记入 session 中
