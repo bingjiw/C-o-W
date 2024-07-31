@@ -323,6 +323,8 @@ class Summary(Plugin):
                 return
 
 
+            session = self.bot.sessions.build_session(session_id, prompt)
+
             # 只有一条总结，直接返回. 也要把总结的答案记入session，对 群聊总结插件没有意义，但对 BasicLLM 有用：让后面的问答知道前面发生的问答内容。
             if len(summarys) == 1:                
                 reply = Reply(ReplyType.TEXT, f"本次总结 {count} 条聊天记录。\n\n"+summarys[0]+replyMax300Hint)
@@ -342,7 +344,6 @@ class Summary(Plugin):
                 query += summary + "\n----------------\n\n"
             prompt = "你擅长分析汇总微信群里的聊天记录摘要，聊天记录已经被你概括成多段摘要，你需要对所有摘要进行总结，最后输出一篇完整的摘要总结，每一条摘要后都空一行。\n"
             
-            session = self.bot.sessions.build_session(session_id, prompt)
             session.add_query(query)
             result = self.bot.reply_text(session)
             total_tokens, completion_tokens, reply_content = result['total_tokens'], result['completion_tokens'], result['content']
