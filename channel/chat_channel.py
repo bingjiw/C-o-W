@@ -252,10 +252,14 @@ class ChatChannel(Channel):
         # reply的构建步骤        
         reply = self._generate_reply(context)
         
-        # 如有些文件类型无法处理或超过大小，或视频号分享 等 暂不支持的类型消息，就会返回 ReplyType.ERROR
-        if reply.type == ReplyType.ERROR :
-            self._send_reply(context, reply)
+        # 若 reply 为空，说明_generate_reply内部出错了，直接退出，不发任何错误消息给用户
+        if reply is None: 
             return
+        
+        # 仅在单聊 且 是文件或分享 且 ReplyType.ERROR 时，才回复用户 出错的情况
+        # 如有些文件类型无法处理或超过大小，或视频号分享 等 暂不支持的类型消息，就会返回 ReplyType.ERROR
+        elif (not context.get("isgroup")) and (context.type==ContextType.FILE or context.type==ContextType.SHARING) and (reply.type == ReplyType.ERROR) :
+            self._send_reply(context, reply)
 
         else :
             logger.debug("[chat_channel] ready to decorate reply: {}".format(reply))
@@ -410,6 +414,9 @@ class ChatChannel(Channel):
             elif context.type == ContextType.FUNCTION :  
                 pass
 
+            elif context.type == ContextType.JOIN_GROUP :
+                return
+            
             else:
                 logger.warning("[chat_channel] unknown context type: {}".format(context.type))
                 return
