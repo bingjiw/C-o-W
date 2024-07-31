@@ -67,7 +67,7 @@ class Summary(Plugin):
         c = c.execute("PRAGMA table_info(chat_records);")
         column_exists = False
         for column in c.fetchall():
-            logger.debug("[Summary] column: {}" .format(column))
+            logger.debug("[群聊总结插件Summary] column: {}" .format(column))
             if column[1] == 'is_triggered':
                 column_exists = True
                 break
@@ -79,15 +79,15 @@ class Summary(Plugin):
 
         btype = Bridge().btype['chat']
         if btype not in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI]:
-            raise Exception("[Summary] init failed, not supported bot type")
+            raise Exception("[群聊总结插件Summary] init failed, not supported bot type")
         self.bot = bot_factory.create_bot(Bridge().btype['chat'])
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         self.handlers[Event.ON_RECEIVE_MESSAGE] = self.on_receive_message
-        logger.info("[Summary] inited")
+        logger.info("[群聊总结插件Summary] inited")
 
     def _insert_record(self, session_id, msg_id, user, content, msg_type, timestamp, is_triggered = 0):
         c = self.conn.cursor()
-        logger.debug("[Summary] insert record: {} {} {} {} {} {} {}" .format(session_id, msg_id, user, content, msg_type, timestamp, is_triggered))
+        logger.debug("[群聊总结插件Summary] insert record: {} {} {} {} {} {} {}" .format(session_id, msg_id, user, content, msg_type, timestamp, is_triggered))
         c.execute("INSERT OR REPLACE INTO chat_records VALUES (?,?,?,?,?,?,?)", (session_id, msg_id, user, content, msg_type, timestamp, is_triggered))
         self.conn.commit()
     
@@ -129,7 +129,7 @@ class Summary(Plugin):
                 is_triggered = True
 
         self._insert_record(session_id, cmsg.msg_id, username, context.content, str(context.type), cmsg.create_time, int(is_triggered))
-        # logger.debug("[Summary] {}:{} ({})" .format(username, context.content, session_id))
+        # logger.debug("[群聊总结插件Summary] {}:{} ({})" .format(username, context.content, session_id))
 
     def _translate_text_to_commands(self, text):
 
@@ -137,6 +137,7 @@ class Summary(Plugin):
         os.environ["LLM_API_KEY"] = conf().get("open_ai_api_key", "")  # 必填
         os.environ["PROXY"] = "http://10.104.0.4:3000"            # .0.4 是测试机的地址 选填
         os.environ["MODEL_NAME"] = "gpt-4o-mini"                   # 选填
+        os.environ["DEBUG"] = True                   # 选填，debug模式
 
         llm = ModelFactory().create_llm_model(**build_model_params({
             "openai_api_key": conf().get("open_ai_api_key", ""),
@@ -149,6 +150,7 @@ class Summary(Plugin):
         )
         bot = LLMChain(llm=llm, prompt=prompt)
         content = bot.run(text)
+        logger.debug(f"炳好奇【群聊总结插件】如何把文本【{text}】翻译成了命令【{content}】")
         return content
 
     def _check_tokens(self, records, max_tokens=3600):
@@ -172,7 +174,7 @@ class Summary(Plugin):
 
         session.add_query("需要你总结的聊天记录如下：%s"%query)
         if  session.calc_tokens() > max_tokens:
-            # logger.debug("[Summary] summary failed, tokens: %d" % session.calc_tokens())
+            # logger.debug("[群聊总结插件Summary] summary failed, tokens: %d" % session.calc_tokens())
             return None
         return session
 
@@ -187,7 +189,7 @@ class Summary(Plugin):
                 left,right = 0, len(records)
                 while left < right:
                     mid = (left + right) // 2
-                    logger.debug("[Summary] left: %d, right: %d, mid: %d" % (left, right, mid))
+                    logger.debug("[群聊总结插件Summary] left: %d, right: %d, mid: %d" % (left, right, mid))
                     session = self._check_tokens(records[:mid], max_tokens_persession)
                     if session is None:
                         right = mid - 1
@@ -195,17 +197,17 @@ class Summary(Plugin):
                         left = mid + 1
                 session = self._check_tokens(records[:left-1], max_tokens_persession)
                 last = left
-                logger.debug("[Summary] summary %d messages" % (left))
+                logger.debug("[群聊总结插件Summary] summary %d messages" % (left))
             else:
                 last = len(records)
-                logger.debug("[Summary] summary all %d messages" % (len(records)))
+                logger.debug("[群聊总结插件Summary] summary all %d messages" % (len(records)))
             if session is None:
-                logger.debug("[Summary] summary failed, session is None")
+                logger.debug("[群聊总结插件Summary] summary failed, session is None")
                 break
-            logger.debug("[Summary] session query: %s, prompt_tokens: %d" % (session.messages, session.calc_tokens()))
+            logger.debug("[群聊总结插件Summary] session query: %s, prompt_tokens: %d" % (session.messages, session.calc_tokens()))
             result = self.bot.reply_text(session)
             total_tokens, completion_tokens, reply_content = result['total_tokens'], result['completion_tokens'], result['content']
-            logger.debug("[Summary] total_tokens: %d, completion_tokens: %d, reply_content: %s" % (total_tokens, completion_tokens, reply_content))
+            logger.debug("[群聊总结插件Summary] total_tokens: %d, completion_tokens: %d, reply_content: %s" % (total_tokens, completion_tokens, reply_content))
             if completion_tokens == 0:
                 if len(summarys) == 0:
                     return count,reply_content
@@ -224,7 +226,7 @@ class Summary(Plugin):
             return
         
         content = e_context['context'].content
-        logger.debug("[Summary] on_handle_context. content: %s" % content)
+        logger.debug("[群聊总结插件Summary] on_handle_context. content: %s" % content)
         trigger_prefix = conf().get('plugin_trigger_prefix', "$")
         clist = content.split()
         if clist[0].startswith(trigger_prefix):
@@ -232,30 +234,45 @@ class Summary(Plugin):
             duration = -1
 
             if "总结" in clist[0]:
-                flag = False
-                if clist[0] == trigger_prefix+"总结":
-                    flag = True
-                    if len(clist) > 1:
-                        try:
-                            limit = int(clist[1])
-                            logger.debug("[Summary] limit: %d" % limit)
-                        except Exception as e:
-                            flag = False
-                if not flag:
-                    text = content.split(trigger_prefix,maxsplit=1)[1]
-                    try:
-                        command_json = find_json(self._translate_text_to_commands(text))
-                        command = json.loads(command_json)
-                        name = command["name"]
-                        if name.lower() == "summary":
-                            limit = int(command["args"].get("count", 99))
-                            if limit < 0:
-                                limit = 299
-                            duration = int(command["args"].get("duration_in_seconds", -1))
-                            logger.debug("[Summary] limit: %d, duration: %d seconds" % (limit, duration))
-                    except Exception as e:
-                        logger.error("[Summary] translate failed: %s" % e)
-                        return
+                replyMax300Hint = "" 
+
+                # 直接用正则表达式匹配数字，从如下
+                # $总结本群最近的50条消息
+                # 的文本中提取数字（正整数）正则表达式 r'\d+' 正则表达式只会匹配一个或多个连续的数字字符（即正整数）。它不会匹配小数或负数。
+                match = re.search(r'\d+', content)  # 只会匹配正整数
+                if match:
+                    limit = int(match.group())
+                    if limit > 300:
+                        replyMax300Hint = "免费版一次最多总结300条消息，若要更多联系技术员 bingjiw"
+                        limit = 300
+                    logger.debug(f"[群聊总结插件Summary] 要总结的消息条数 limit 是: {limit}  {replyMax300Hint}")
+
+                #炳注：原代码用LLM翻译语意到命令，太复杂。
+                # 炳改为：现在直接用正则表达式匹配数字，如上
+                # flag = False
+                # if clist[0] == trigger_prefix+"总结":
+                #     flag = True
+                #     if len(clist) > 1:
+                #         try:
+                #             limit = int(clist[1])
+                #             logger.debug("[群聊总结插件Summary] limit: %d" % limit)
+                #         except Exception as e:
+                #             flag = False
+                # if not flag:
+                #     text = content.split(trigger_prefix,maxsplit=1)[1]
+                #     try:
+                #         command_json = find_json(self._translate_text_to_commands(text))
+                #         command = json.loads(command_json)
+                #         name = command["name"]
+                #         if name.lower() == "summary":
+                #             limit = int(command["args"].get("count", 99))
+                #             if limit < 0:
+                #                 limit = 299
+                #             duration = int(command["args"].get("duration_in_seconds", -1))
+                #             logger.debug("[群聊总结插件Summary] limit: %d, duration: %d seconds" % (limit, duration))
+                #     except Exception as e:
+                #         logger.error("[群聊总结插件Summary] translate failed: %s" % e)
+                #         return
             else:
                 return
 
@@ -314,11 +331,11 @@ class Summary(Plugin):
             session.add_query(query)
             result = self.bot.reply_text(session)
             total_tokens, completion_tokens, reply_content = result['total_tokens'], result['completion_tokens'], result['content']
-            logger.debug("[Summary] total_tokens: %d, completion_tokens: %d, reply_content: %s" % (total_tokens, completion_tokens, reply_content))
+            logger.debug("[群聊总结插件Summary] total_tokens: %d, completion_tokens: %d, reply_content: %s" % (total_tokens, completion_tokens, reply_content))
             if completion_tokens == 0:
                 reply = Reply(ReplyType.ERROR, "合并摘要失败，"+reply_content+"\n原始多段摘要如下：\n"+query)
             else:
-                reply = Reply(ReplyType.TEXT, f"本次总结了{count}条消息。\n\n"+reply_content)     
+                reply = Reply(ReplyType.TEXT, f"本次总结了{count}条消息。\n\n"+reply_content+replyMax300Hint)     
             e_context['reply'] = reply
             e_context.action = EventAction.BREAK_PASS # 事件结束，并跳过处理context的默认逻辑
 
