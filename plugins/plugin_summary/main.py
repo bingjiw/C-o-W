@@ -323,18 +323,24 @@ class Summary(Plugin):
                 return
 
 
-            if len(summarys) == 1:
-                reply = Reply(ReplyType.TEXT, f"本次总结了{count}条消息。\n\n"+summarys[0]+replyMax300Hint)
-                e_context['reply'] = reply
+            # 只有一条总结，直接返回. 也要把总结的答案记入session，对 群聊总结插件没有意义，但对 BasicLLM 有用：让后面的问答知道前面发生的问答内容。
+            if len(summarys) == 1:                
+                reply = Reply(ReplyType.TEXT, f"本次总结 {count} 条聊天记录。\n\n"+summarys[0]+replyMax300Hint)
                 
+                #炳加此句：把总结的答案记入session，对 群聊总结插件没有意义，但对 BasicLLM 有用：让后面的问答知道前面发生的问答内容。
+                session.add_reply(reply.content) 
+                
+                e_context['reply'] = reply                
                 e_context.action = EventAction.BREAK_PASS
                 return
             
+            ################### 走到这里，说明有多条总结，需要合并 ##################
+
             self.bot.args["max_tokens"] = None
             query = ""
             for i,summary in enumerate(reversed(summarys)):
                 query += summary + "\n----------------\n\n"
-            prompt = "你是一位群聊机器人，聊天记录已经在你的大脑中被你总结成多段摘要总结，你需要对它们进行摘要总结，最后输出一篇完整的摘要总结，用列表的形式输出。\n"
+            prompt = "你擅长分析汇总微信群里的聊天记录摘要，聊天记录已经被你概括成多段摘要，你需要对所有摘要进行总结，最后输出一篇完整的摘要总结，每一条摘要后都空一行。\n"
             
             session = self.bot.sessions.build_session(session_id, prompt)
             session.add_query(query)
