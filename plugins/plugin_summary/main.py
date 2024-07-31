@@ -206,8 +206,6 @@ class Summary(Plugin):
                 break
             logger.debug("[群聊总结插件Summary] session query: %s, prompt_tokens: %d" % (session.messages, session.calc_tokens()))
             result = self.bot.reply_text(session)
-            要总结的原始内容都在session中，
-            session.
             total_tokens, completion_tokens, reply_content = result['total_tokens'], result['completion_tokens'], result['content']
             logger.debug("[群聊总结插件Summary] total_tokens: %d, completion_tokens: %d, reply_content: %s" % (total_tokens, completion_tokens, reply_content))
             if completion_tokens == 0:
