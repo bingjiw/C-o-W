@@ -159,12 +159,15 @@ class Bridge(object):
         #如果需要 总结 上传的文件（"txt", "csv", "docx", "pdf", "md", "jpg", "jpeg", "png"）
         needSummarizeUploadFile = (context.type == ContextType.FILE)
 
+        #如果 请求是以"$总结"开头的，则 需要 群聊总结插件
+        need_GroupChatSummaryPlugin = (query.startswith("$总结"))
+
         # 2 组 LINKAI 代码 的分工：
         # LINKAI插件  组处理：【公众号分享】、文件（"txt", "csv", "docx", "pdf", "md", "jpg", "jpeg", "png"）
         # LINAAI BOT 组处理： 普通文本、IMAGE图片识别
         #
         # 如果是需要 LINKAI插件  组处理的消息：【公众号分享】、文件
-        if needReadWeiXinSHARING or needSummarizeUploadFile :
+        if needReadWeiXinSHARING or needSummarizeUploadFile or need_GroupChatSummaryPlugin :
             #因发现deepseek读到的微信分享页面内容错误，估计微信页面用了些奇怪技术防止机器人读取。所以还是交给LINKAI处理吧，LINKAI已经弄通了微信页面的怪诡计
             # 🚩调用：【LinkAI插件】来处理，而不是LinkAIBot。
             #LinkAI插件可以读到正确的微信的图文分享内容，但LinkAIBot却会读到错误的。
@@ -184,8 +187,12 @@ class Bridge(object):
             ) 
             #
             from plugins import PluginManager
-            #只为LINKAI插件 产生事件 emit_event
-            e_context = PluginManager().emit_event_ONLY_FOR_PLUGIN_( ["LINKAI"], e_context )
+            if need_GroupChatSummaryPlugin :
+                #调 群聊总结插件
+                e_context = PluginManager().emit_event_ONLY_FOR_PLUGIN_( ["SUMMARY"], e_context )
+            else :
+                #只为LINKAI插件 产生事件 emit_event
+                e_context = PluginManager().emit_event_ONLY_FOR_PLUGIN_( ["LINKAI"], e_context )
             reply = e_context['reply']
             #
             # 炳用 reply的ReplyType.ERROR表示，内部遇到不支持的内容，中途退出，无需后续处理。
@@ -193,7 +200,7 @@ class Bridge(object):
             if reply.type == ReplyType.ERROR :
                 BasicReply = Reply(ReplyType.ERROR)
                 BasicReply.content = f"🙁{reply.content}"
-                return BasicReply #提前结束，后面的 2答等 不用执行了。
+                return BasicReply #因第1答出错了，所以提前结束，后面的 2答等 不用执行了。
             else :
                 BasicReply = Reply(ReplyType.TEXT)
                 BasicReply.content = f"{reply.content}"
@@ -269,7 +276,7 @@ class Bridge(object):
                 
                 # 这样 BasicLLM的Session 也能知道【搜索】或【问图】的结果内容, 下次问答时就能用到
                 if  needSummarizeUploadFile or needReadWeiXinSHARING :    
-                    strQueryAddToSession = "总结分享的文章/上传的文件"
+                    strQueryAddToSession = f"总结 分享的文章/上传的文件:《{query}》"
                     strAnswerAddToSession = BasicReply.content
                     
                 elif needRecognizeImage or needOnlineSearch : 
@@ -290,7 +297,10 @@ class Bridge(object):
 
             # VVVVVVVVVVVVVVVVV 双答第 2 答 VVVVVVVVVVVVVVVVVV      
 
-            if needReadWeiXinSHARING or needSummarizeUploadFile :
+            if need_GroupChatSummaryPlugin :
+                strQueryToLLM = f"“{BasicReply.content}”\n\n根据以上“”中的（群聊）聊天记录总结，分析聊天话题的倾向、关心的重点、参与者的愿望。"
+
+            elif needReadWeiXinSHARING or needSummarizeUploadFile :
                 #【微信图文分享】直接让高级LLM评价上面的BasicLLM（LINKAI）读到的【微信图文分享】内容
                 strQueryToLLM = f"“{BasicReply.content}”\n\n评论以上“”中的内容，并指出你不认同的部分，或找出文章的缺点、错误。"
 

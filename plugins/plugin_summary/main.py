@@ -206,6 +206,8 @@ class Summary(Plugin):
                 break
             logger.debug("[群聊总结插件Summary] session query: %s, prompt_tokens: %d" % (session.messages, session.calc_tokens()))
             result = self.bot.reply_text(session)
+            要总结的原始内容都在session中，
+            session.
             total_tokens, completion_tokens, reply_content = result['total_tokens'], result['completion_tokens'], result['content']
             logger.debug("[群聊总结插件Summary] total_tokens: %d, completion_tokens: %d, reply_content: %s" % (total_tokens, completion_tokens, reply_content))
             if completion_tokens == 0:
@@ -286,8 +288,11 @@ class Summary(Plugin):
 
             msg:ChatMessage = e_context['context']['msg']
             session_id = msg.from_user_id
-            if conf().get('channel_type', 'wx') == 'wx' and msg.from_user_nickname is not None:
-                session_id = msg.from_user_nickname # itchat channel id会变动，只好用名字作为session id
+            #炳注：故意要用群聊的session_id, 如 from_user_id=@@eb2a473f16ff421b65d17d8b04be8f6481b33d2340dab471cc51a0d51bb965a1
+            #这样在下面的session.add_query时，会把 要总结的消息 加入到 BasicLLM 中，以让BasicLLM了解插件的问答，保持连贯性。
+            #且炳用了hot_reload后，session_ID（群聊ID）变的机会不多，只要不重新扫码就一直不会变。
+                # if conf().get('channel_type', 'wx') == 'wx' and msg.from_user_nickname is not None:
+                #     session_id = msg.from_user_nickname # itchat channel id会变动，只好用名字作为session id
             records = self._get_records(session_id, start_time, limit)
             for i in range(len(records)):
                 record=list(records[i])
@@ -318,6 +323,7 @@ class Summary(Plugin):
             if len(summarys) == 1:
                 reply = Reply(ReplyType.TEXT, f"本次总结了{count}条消息。\n\n"+summarys[0]+replyMax300Hint)
                 e_context['reply'] = reply
+                
                 e_context.action = EventAction.BREAK_PASS
                 return
             
@@ -331,6 +337,10 @@ class Summary(Plugin):
             session.add_query(query)
             result = self.bot.reply_text(session)
             total_tokens, completion_tokens, reply_content = result['total_tokens'], result['completion_tokens'], result['content']
+            
+            #炳加此句：把总结的答案记入session，对 群聊总结插件没有意义，但对 BasicLLM 有用：让后面的问答知道前面发生的问答内容。
+            session.add_reply(reply_content) 
+
             logger.debug("[群聊总结插件Summary] total_tokens: %d, completion_tokens: %d, reply_content: %s" % (total_tokens, completion_tokens, reply_content))
             if completion_tokens == 0:
                 reply = Reply(ReplyType.ERROR, "合并摘要失败，"+reply_content+"\n原始多段摘要如下：\n"+query)
