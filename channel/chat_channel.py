@@ -143,7 +143,7 @@ class ChatChannel(Channel):
                 #炳改，使支持 微信中的引用
                 #整理一下文本与格式，以便LLM处理与理解
                 content = WeiXin_Reference_extract_and_format(content)
-                logger.debug(f"微信引用如下将发给LLM:\n{content}")
+                logger.debug(f"微信引用修整格式后:\n{content}")
                 #logger.debug("[chat_channel]reference query skipped")
                 #炳：取消了原来对引用的跳过 return None
 
