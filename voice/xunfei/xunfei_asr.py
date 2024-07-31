@@ -55,10 +55,17 @@ class Ws_Param(object):
         self.CommonArgs = {"app_id": self.APPID}
 
     def create_url(self):
-        url = 'wss://ws-api.xfyun.cn/v2/iat'
+        #原来连中国的，老是超时 丢包。改连迅飞新加坡的服务器 
+        #url = 'wss://ws-api.xfyun.cn/v2/iat'
+        url = 'wss://iat-api-sg.xf-yun.com/v2/iat'
+        
         now = datetime.now()
         date = format_date_time(mktime(now.timetuple()))
-        signature_origin = "host: " + "ws-api.xfyun.cn" + "\n"
+
+        #此行是原来连中国的，老是超时 丢包。
+        #signature_origin = "host: " + "ws-api.xfyun.cn" + "\n"
+        signature_origin = "host: " + "iat-api-sg.xf-yun.com" + "\n"
+
         signature_origin += "date: " + date + "\n"
         signature_origin += "GET " + "/v2/iat " + "HTTP/1.1"
         signature_sha = hmac.new(self.APISecret.encode('utf-8'), signature_origin.encode('utf-8'),
@@ -70,7 +77,12 @@ class Ws_Param(object):
         v = {
             "authorization": authorization,
             "date": date,
-            "host": "ws-api.xfyun.cn"
+            
+            # 此行是原来连中国的，老是超时 丢包。
+            # "host": "ws-api.xfyun.cn"
+            
+            #语音识别改连迅飞新加坡的服务器 
+            "host": "iat-api-sg.xf-yun.com" 
         }
         url = url + '?' + urlencode(v)
         return url
