@@ -376,7 +376,7 @@ class ChatChannel(Channel):
                     if memory.USER_IMAGE_CACHE.get(context["session_id"]) is not None:
                         reply = Reply(ReplyType.TEXT, "🖼️虽然收到多张图片，但只能针对最后一张图片提问（不要连续发多张图片。请发一张问一张）")
                     else :
-                        reply = Reply(ReplyType.TEXT, "🖼️收到一张图片，你现在可以问与此图片相关的问题（可一次问多个问题）")
+                        reply = Reply(ReplyType.TEXT, "🖼️收到一张图片，在90秒可问与此图相关的问题（可一次问多个问题）")
                 #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
                 # 无论是单聊 还是 群聊 都把图片存好记下

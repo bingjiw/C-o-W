@@ -271,8 +271,10 @@ class Bridge(object):
 
             # VVVVVVVVVVVVVVVVV 保存LINKAI插件或BOT的问答内容到Session VVVVVVVVVVVVVVVVVV      
 
+            # 不是 群聊总结插件时 才需要在此保存session到BasicLLM
             # 如果用过LINKAI，就把LINKAI的最近添加的session中的内容copy给BasicLLM一份。
-            if needSummarizeUploadFile or needReadWeiXinSHARING or needRecognizeImage or needOnlineSearch :
+            if  (not need_GroupChatSummaryPlugin) and \
+                (needSummarizeUploadFile or needReadWeiXinSHARING or needRecognizeImage or needOnlineSearch) :
                 
                 # 这样 BasicLLM的Session 也能知道【搜索】或【问图】的结果内容, 下次问答时就能用到
                 if  needSummarizeUploadFile or needReadWeiXinSHARING :    
