@@ -22,7 +22,24 @@ from config import conf
     
 
 class ChatGPTSession(Session):
+    """
+    ChatGPTSession is a session class for interacting with the ChatGPT model.
+
+    Attributes:
+        session_id (str): The unique identifier for the session.
+        system_prompt (str, optional): The system prompt to initialize the session with. Defaults to None.
+        model (str): 此处传入model仅用于计算token数量，并不影响BOT调用哪个模型。默认值"gpt-3.5-turbo".
+    """
+
     def __init__(self, session_id, system_prompt=None, model="gpt-3.5-turbo"):
+        """
+        Initializes a new instance of the ChatGPTSession class.
+
+        Args:
+            session_id (str): The unique identifier for the session.
+            system_prompt (str, optional): The system prompt to initialize the session with. Defaults to None.
+            model (str): 此处传入model仅用于计算token数量，并不影响BOT调用哪个模型。默认值"gpt-3.5-turbo".
+        """
         
         #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
         #炳：若是BasicLLM、AdvanLLM则拿各自特定的system_prompt
