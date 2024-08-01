@@ -207,8 +207,8 @@ class Bridge(object):
             reply = e_context['reply']
             #
             # 炳用 reply的ReplyType.ERROR表示，内部遇到不支持的内容，中途退出，无需后续处理。
-            # 某些不支持的分享，e_context会返回None
-            if reply.type == ReplyType.ERROR :
+            # 某些不支持的分享, 返回各种的None全都是出错，e_context会返回None
+            if (reply is None) or (reply.content is None) or (reply.type == ReplyType.ERROR) :
                 BasicReply = Reply(ReplyType.ERROR)
                 BasicReply.content = f"🙁{reply.content}"
                 return BasicReply #因第1答出错了，所以提前结束，后面的 2答等 不用执行了。

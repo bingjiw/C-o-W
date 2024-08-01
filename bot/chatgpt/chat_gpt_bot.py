@@ -129,6 +129,10 @@ class ChatGPTBot(Bot, OpenAIImage):
             if args is None:
                 args = self.args
 
+            # 炳：打印出真正去调LLM时，调用发出的参数
+            import json
+            logger.debug(f"ChatGPTBot真正去调LLM时，调用发出哪些：\napi_key={api_key}\nmessages={session.messages}\nargs={json.dumps(args, ensure_ascii=False, indent=2)}")
+
             # 炳：这句是 真正去调 LLM    
             response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **args)
             # logger.debug("[CHATGPT] response={}".format(response))
