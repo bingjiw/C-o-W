@@ -101,16 +101,16 @@ class Bridge(object):
                 #
 
                 # 创建一个给FreeLLM 和 BasicLLM 共用的sessions      Create a single instance of SessionManager
-                shared_session_manager = SessionManager(ChatGPTSession, model="gpt-3.5-turbo")
+                a_shared_session_manager = SessionManager(ChatGPTSession, model="gpt-3.5-turbo")
 
                 # 创建 几 个 chat bot
                 # 创建 LINKAI 用的 chat bot
                 #
                 # 创建 FreeLLM 用的 CHATGPT chat bot(One-api中再指向具体用哪家的免费LLM)
-                self.bots[typename]["FreeLLM"] = create_bot("ChatGPTBot.FreeLLM", session_manager=shared_session_manager)
+                self.bots[typename]["FreeLLM"] = create_bot("ChatGPTBot.FreeLLM", shared_session_manager=a_shared_session_manager)
                 #
                 # 创建 BasicLLM 用的 CHATGPT chat bot(One-api中再指向 Deepseek-v2, qwen-max 等 普通级LLM)
-                self.bots[typename]["BasicLLM"] = create_bot("ChatGPTBot.BasicLLM", session_manager=shared_session_manager)
+                self.bots[typename]["BasicLLM"] = create_bot("ChatGPTBot.BasicLLM", shared_session_manager=a_shared_session_manager)
                 #
                 # 创建 AdvanLLM 用的 CHATGPT chat bot(One-api中再指向GPT4,4o,claude等 高级LLM)
                 self.bots[typename]["AdvanLLM"] = create_bot("ChatGPTBot.AdvanLLM")
