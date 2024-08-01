@@ -19,7 +19,7 @@ from config import conf, load_config
 
 # OpenAI对话模型API (可用)
 class ChatGPTBot(Bot, OpenAIImage):
-    def __init__(self, Which_LLM_To_Create="BasicLLM"):
+    def __init__(self, Which_LLM_To_Create="BasicLLM", session_manager=None):
         super().__init__()
         # set the default api_key
         openai.api_key = conf().get(Which_LLM_To_Create)["open_ai_api_key"]
@@ -31,7 +31,15 @@ class ChatGPTBot(Bot, OpenAIImage):
         if conf().get("rate_limit_chatgpt"):
             self.tb4chatgpt = TokenBucket(conf().get("rate_limit_chatgpt", 20))
 
-        self.sessions = SessionManager(ChatGPTSession, model=conf().get(Which_LLM_To_Create)["model"] or "gpt-3.5-turbo")
+        # 炳注：
+        #以上的 openai.api_key, openai.api_base, openai.proxy, 都是库的全局变量，无法给每个bot实例设置不同的值
+        #只有下方的 model 可以给每个bot实例设置不同的值
+        # SessionManager及其子类ChatGPTSession 中的model仅用于计算令牌数量。
+        
+        #self.sessions = SessionManager(ChatGPTSession, model=conf().get(Which_LLM_To_Create)["model"] or "gpt-3.5-turbo")
+        # 炳：原如上，现改为BasicLLM与FreeLLM这2个BOT用共享一个sessions     Use the provided session_manager or create a new one
+        self.sessions = session_manager or SessionManager(ChatGPTSession, model=conf().get(Which_LLM_To_Create)["model"] or "gpt-3.5-turbo")
+        
         self.args = {
             "model": conf().get(Which_LLM_To_Create)["model"] or "gpt-3.5-turbo",  # 对话模型的名称
             "temperature": conf().get("temperature", 0.9),  # 值在[0,1]之间，越大表示回复越具有不确定性
@@ -195,7 +203,7 @@ class ChatGPTBot(Bot, OpenAIImage):
             
             if isinstance(e, openai.error.RateLimitError):
                 logger.warn("[CHATGPT] RateLimitError: {}".format(e))
-                result["content"] = "提问太快啦，请休息一下再问我吧"
+                result["content"] = f"我现在很忙，已接近回答问题的极限能力（每分钟{conf().get("rate_limit_chatgpt")}个）。\n\n再等我2分钟,一有空就回答你\n\n2分钟后再问我\n\n若几次都没答，请让技术员 bingjiw 增加我的能力"
                 if need_retry:
                     time.sleep(20)
             elif isinstance(e, openai.error.Timeout):

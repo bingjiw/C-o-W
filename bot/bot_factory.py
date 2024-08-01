@@ -4,7 +4,12 @@ channel factory
 from common import const
 
 
-def create_bot(bot_type):
+#炳注：不用import SessionManager，因仅传参数，并没真正使用此类。得益于python的动态类型特性
+#  you don't need to import SessionManager in bot_factory.py if you are not directly using the class is due to Python's dynamic typing and flexible import system. In Python, you can pass objects around without needing to explicitly import their types in every file where they are used, as long as the objects are passed correctly at runtime.
+# In statically typed languages like Java or C#, you typically need to import or include the class definitions because the compiler needs to know the types of all objects at compile time. This is necessary for type checking and ensuring that the code adheres to the language's type system.
+
+
+def create_bot(bot_type, shared_session_manager=None):
     """
     create a bot_type instance
     :param bot_type: bot type code
@@ -18,11 +23,17 @@ def create_bot(bot_type):
         return BaiduWenxinBot()
 
 
+    #炳，免费LLM
+    elif bot_type == "ChatGPTBot.FreeLLM":
+        # ChatGPT 网页端web接口
+        from bot.chatgpt.chat_gpt_bot import ChatGPTBot
+        return ChatGPTBot("FreeLLM", session_manager=shared_session_manager)
+
     #炳，基本LLM
     elif bot_type == "ChatGPTBot.BasicLLM":
         # ChatGPT 网页端web接口
         from bot.chatgpt.chat_gpt_bot import ChatGPTBot
-        return ChatGPTBot("BasicLLM")
+        return ChatGPTBot("BasicLLM", session_manager=shared_session_manager)
     
     #炳，高级LLM
     elif bot_type == "ChatGPTBot.AdvanLLM":

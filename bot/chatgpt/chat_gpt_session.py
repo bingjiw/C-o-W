@@ -12,6 +12,14 @@ from config import conf
     ]
 """
 
+# 炳注：
+# ChatGPTSession 中的model仅用于计算令牌数量。
+# ChatGPTSession 类中的model主要用于计算令牌数量。
+# ChatGPTSession 类中的model确实用于计算令牌数量。
+# the model in ChatGPTSession is only being used for calulate token numbers
+#  that the model in the ChatGPTSession class is primarily used for calculating the number of tokens. 
+#  the model is indeed used for calculating the number of tokens in the ChatGPTSession class.
+    
 
 class ChatGPTSession(Session):
     def __init__(self, session_id, system_prompt=None, model="gpt-3.5-turbo"):

@@ -13,6 +13,13 @@ from common.log import logger
 available_setting = {
 
     #下方是炳加的：VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV  
+    "FreeLLM": {
+        "open_ai_api_key": "sk---------", 
+        "open_ai_api_base": "http://127.0.0.1:3000/v1", 
+        "model": "qwen-turbo",
+        "system_prompt": "要不同的系统提示词来针对不同的大模型的特点来设置"
+    },
+
     "BasicLLM": {
         "open_ai_api_key": "sk---------", 
         "open_ai_api_base": "http://127.0.0.1:3000/v1", 

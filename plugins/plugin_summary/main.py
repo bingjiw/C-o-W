@@ -77,10 +77,14 @@ class Summary(Plugin):
 
         self.conn.commit()
 
-        btype = Bridge().btype['chat']
-        if btype not in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI]:
-            raise Exception("[群聊总结插件Summary] init failed, not supported bot type")
-        self.bot = bot_factory.create_bot(Bridge().btype['chat'])
+        #用免费的BOT
+        Bridge().the_Bot_I_Want = "FreeLLM"
+        self.bot = Bridge().get_bot("chat")
+        #以下4行代码，是原来的代码。现在不用了，因为炳已用get_bot来统一取BOT了
+        #btype = Bridge().btype['chat']
+        # if btype not in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI]:
+        #     raise Exception("[群聊总结插件Summary] init failed, not supported bot type")
+        #self.bot = bot_factory.create_bot(Bridge().btype['chat'])
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         self.handlers[Event.ON_RECEIVE_MESSAGE] = self.on_receive_message
         logger.info("[群聊总结插件Summary] inited")

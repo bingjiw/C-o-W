@@ -135,7 +135,18 @@ class ChatChannel(Channel):
                 return None
 
         # 消息内容匹配过程，并处理content
-        if (ctype == ContextType.TEXT) or (ctype == ContextType.SHARING) :
+        # 若是 文件
+        if (ctype == ContextType.FILE) :
+            # 群聊中有人发文件，不用理它。不支持群聊内发的文件解读，且不一定是发给我机器人看的。
+            if context.get("isgroup", False):  # 群聊
+                #对群聊中的文件，啥也不用干，直接退出函数，不要返回context对象
+                return
+            else:  # 单聊
+                #对单聊中的文件，啥也不用干。函数最后会自动返回 context 的
+                pass
+
+        # 若是 文本 或 分享
+        elif (ctype == ContextType.TEXT) or (ctype == ContextType.SHARING) :
 
             #微信中的引用  , 也是属于文字TEXT 
             if first_in and "」\n- - - - - - -" in content:  # 初次匹配 过滤引用消息
@@ -406,7 +417,7 @@ class ChatChannel(Channel):
                 # elif itchat_msg["Type"] == SHARING:
                 # self.ctype = ContextType.SHARING
                 # self.content = itchat_msg.get("Url")
-                logger.warning(f"[chat_channel.py]将处理微信的“图文分享”: {context.content}")
+                logger.warning(f"[chat_channel.py]将处理微信的“公众号分享”或“上传的文件”: {context.content}")
                 #
                 #保持context.type为SHARING，在bridge.py中再调LINKAI处理。因发现deepseek读到的微信分享页面内容错误，估计微信页面用了些奇怪技术防止机器人读取。所以还是交给LINKAI处理吧，LINKAI已经弄通了微信页面的怪诡计
                 #context.type = ContextType.TEXT #把类型改为文字文本类型，以便后面的处理不会遇到刁难
