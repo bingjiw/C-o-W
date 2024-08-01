@@ -203,7 +203,7 @@ class ChatGPTBot(Bot, OpenAIImage):
             
             if isinstance(e, openai.error.RateLimitError):
                 logger.warn("[CHATGPT] RateLimitError: {}".format(e))
-                result["content"] = f"我现在很忙，已接近回答问题的极限能力（每分钟{conf().get("rate_limit_chatgpt")}个）。\n\n再等我2分钟,一有空就回答你\n\n2分钟后再问我\n\n若几次都没答，请让技术员 bingjiw 增加我的能力"
+                result["content"] = f"我现在很忙，已接近回答问题的极限能力（每分钟{conf().get('rate_limit_chatgpt')}个）。\n\n再等我2分钟,一有空就回答你\n\n2分钟后再问我\n\n若几次都没答，请让技术员 bingjiw 增加我的能力"
                 if need_retry:
                     time.sleep(20)
             elif isinstance(e, openai.error.Timeout):
