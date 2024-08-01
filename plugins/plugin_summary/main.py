@@ -233,6 +233,7 @@ class Summary(Plugin):
         if e_context['context'].type != ContextType.TEXT:
             return
         
+        context = e_context['context']
         content = e_context['context'].content
         logger.debug("[群聊总结插件Summary] on_handle_context. content: %s" % content)
         trigger_prefix = conf().get('plugin_trigger_prefix', "$")
@@ -348,7 +349,9 @@ class Summary(Plugin):
                 query += summary + "\n----------------\n\n"
             
             session.add_query(query)
+            
             result = self.bot.reply_text(session)
+            
             total_tokens, completion_tokens, reply_content = result['total_tokens'], result['completion_tokens'], result['content']
             
             #炳加此句：把总结的答案记入session，对 群聊总结插件没有意义，但对 BasicLLM 有用：让后面的问答知道前面发生的问答内容。

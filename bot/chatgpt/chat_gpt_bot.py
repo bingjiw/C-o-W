@@ -21,10 +21,17 @@ from config import conf, load_config
 class ChatGPTBot(Bot, OpenAIImage):
     def __init__(self, Which_LLM_To_Create="BasicLLM", session_manager=None):
         super().__init__()
+        
+        #存一份api_key，以便在reply_text（不传入api_key时）中使用
+        self.the_API_KEY_gave_me_when_I_born = conf().get(Which_LLM_To_Create)["open_ai_api_key"]
         # set the default api_key
-        openai.api_key = conf().get(Which_LLM_To_Create)["open_ai_api_key"]
-        if conf().get(Which_LLM_To_Create)["open_ai_api_base"]:
-            openai.api_base = conf().get(Which_LLM_To_Create)["open_ai_api_base"]
+        openai.api_key = self.the_API_KEY_gave_me_when_I_born
+
+        #存一份api_base
+        self.the_API_BASE_gave_me_when_I_born = conf().get(Which_LLM_To_Create)["open_ai_api_base"]
+        if self.the_API_BASE_gave_me_when_I_born:
+            openai.api_base = self.the_API_BASE_gave_me_when_I_born
+
         proxy = conf().get("proxy")
         if proxy:
             openai.proxy = proxy
@@ -125,7 +132,14 @@ class ChatGPTBot(Bot, OpenAIImage):
         try:
             if conf().get("rate_limit_chatgpt") and not self.tb4chatgpt.get_token():
                 raise openai.error.RateLimitError("RateLimitError: rate limit exceeded")
-            # if api_key == None, the default openai.api_key will be used
+
+            # 炳注：原此句胡说八道：害人：if api_key == None, the default openai.api_key will be used
+
+            # 炳：plugin_summary\main.py 直接调用reply_text会出错（因api_key=None），因为没有传入api_key
+            #    所以在此对没有转入api_key的情况进行处理
+            if api_key == None:
+                api_key = self.the_API_KEY_gave_me_when_I_born
+
             if args is None:
                 args = self.args
 
