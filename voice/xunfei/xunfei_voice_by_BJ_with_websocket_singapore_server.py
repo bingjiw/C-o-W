@@ -135,7 +135,7 @@ class XunfeiVoice:
 
     def voiceToText(self, voice_file):
         try:
-            logger.debug("[Xunfei] voice file name={}".format(voice_file))
+            logger.debug("[Xunfei炳版讯飞语音识别] 新加坡 server 将处理：{}".format(voice_file))
             wsParam = Ws_Param(self.APPID, self.APIKey, self.APISecret, voice_file)
             websocket.enableTrace(False)
             wsUrl = wsParam.create_url()
@@ -145,9 +145,9 @@ class XunfeiVoice:
             ws.full_result = ""
             ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
             text = ws.full_result if ws.full_result else "No result obtained"
-            logger.info("炳版讯飞语音识别 结果:> {}".format(text))
+            logger.debug("炳版讯飞语音识别 结果:> {}".format(text))
             reply = Reply(ReplyType.TEXT, text)
         except Exception as e:
-            logger.warn("XunfeiVoice init failed: %s, ignore " % e)
-            reply = Reply(ReplyType.ERROR, "炳版讯飞语音识别 出错了:> {}".format(str(e)))
+            logger.debug("XunfeiVoice炳版讯飞语音识别 init failed: %s, ignore " % e)
+            reply = Reply(ReplyType.ERROR, "语音识别🙉出错了😭{}".format(str(e)))
         return reply
