@@ -233,7 +233,7 @@ class ChatGPTBot(Bot, OpenAIImage):
                     time.sleep(5)
             elif isinstance(e, openai.error.APIError):
                 logger.warn("[CHATGPT] Bad Gateway: {}".format(e))
-                result["content"] = "请再问我一次"
+                result["content"] = "网络故障，请稍候再问。如果几次都不行，请联系技术员 bingjiw"
                 if need_retry:
                     time.sleep(10)
             elif isinstance(e, openai.error.APIConnectionError):
