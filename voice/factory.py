@@ -5,7 +5,7 @@ voice factory
 
 def create_voice(voice_type):
     """
-    create a voice instance
+    可视作建一个语音识别的机器人  create a voice instance
     :param voice_type: voice type code
     :return: voice instance
     """
@@ -49,7 +49,7 @@ def create_voice(voice_type):
 
         return EdgeVoice()
     elif voice_type == "xunfei":
-        from voice.xunfei.xunfei_voice import XunfeiVoice
+        from voice.xunfei.xunfei_voice_by_BJ_with_websocket_singapore_server import XunfeiVoice
 
         return XunfeiVoice()
     raise RuntimeError
