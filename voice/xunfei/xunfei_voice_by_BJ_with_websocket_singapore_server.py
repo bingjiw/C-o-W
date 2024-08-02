@@ -141,9 +141,17 @@ class XunfeiVoice:
             ws.wsParam = wsParam
             ws.full_result = ""
             ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-            text = ws.full_result if ws.full_result else "No result obtained"
+
+            #如果识别结果有内容
+            if ws.full_result :
+                text = ws.full_result
+                reply = Reply(ReplyType.TEXT, text)            
+            #如果识别结果 为空
+            else:
+                text = "<你的语音没有任何内容，一个字也没有说。请检查手机麦克风的录音功能是否正常。>\n\n<You didn't say anything.>"
+                reply = Reply(ReplyType.ERROR, text)
             print("炳版讯飞语音识别 结果:> {}".format(text))
-            reply = Reply(ReplyType.TEXT, text)
+
         except Exception as e:
             print("XunfeiVoice炳版讯飞语音识别 init failed: %s, ignore " % e)
             reply = Reply(ReplyType.ERROR, "语音识别🙉出错了😭{}".format(str(e)))

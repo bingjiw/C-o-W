@@ -353,7 +353,7 @@ class ChatChannel(Channel):
                 
                 # 如果语音识别失败，
                 if reply.type == ReplyType.ERROR or reply.content == "":
-                    _send_info(e_context, f"语音识别失败，无法识别你说的话\n\n请发文字消息提问")
+                    _send_info(e_context, f"语音识别失败，无法识别你说的话\n\n请发文字消息提问\n\n{reply.content}")
                     return
 
                 # 删除临时文件
