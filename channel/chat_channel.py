@@ -173,7 +173,7 @@ class ChatChannel(Channel):
                         nick_name = context["msg"].actual_user_nickname
                         if nick_name and nick_name in nick_name_black_list:
                             # 黑名单过滤
-                            logger.warning(f"[chat_channel] Nickname {nick_name} in In BlackList, ignore")
+                            logger.warning(f"[chat_channel]群聊时，昵称【{nick_name}】在昵称黑名单nick_name_black_list中, 忽略")
                             return None
 
                         logger.info("[chat_channel]receive group at")
@@ -202,7 +202,8 @@ class ChatChannel(Channel):
                 if nick_name and nick_name in nick_name_black_list:
                     # 黑名单过滤
                     # 这里是第2次黑名单过滤，滤文字类。      第1次过滤 滤：语音与图片
-                    logger.warning(f"[chat_channel] Nickname '{nick_name}' in In BlackList, ignore")
+                    logger.warning(f"[chat_channel]单聊时，昵称【{nick_name}】在昵称黑名单nick_name_black_list中, 忽略")
+                    #logger.warning(f"[chat_channel] Nickname '{nick_name}' in In BlackList, ignore")
                     return None
 
                 match_prefix = check_prefix(content, conf().get("single_chat_prefix", [""]))

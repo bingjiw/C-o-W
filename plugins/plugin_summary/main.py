@@ -15,10 +15,11 @@ from plugins import *
 from common.log import logger
 from common import const
 import sqlite3
-from chatgpt_tool_hub.chains.llm import LLMChain
-from chatgpt_tool_hub.models import build_model_params
-from chatgpt_tool_hub.models.model_factory import ModelFactory
-from chatgpt_tool_hub.prompts import PromptTemplate
+# 炳 因不用把总结请求的语句翻译成命令，所以不需要这些
+# from chatgpt_tool_hub.chains.llm import LLMChain
+# from chatgpt_tool_hub.models import build_model_params
+# from chatgpt_tool_hub.models.model_factory import ModelFactory
+# from chatgpt_tool_hub.prompts import PromptTemplate
 TRANSLATE_PROMPT = '''
 You are now the following python function: 
 ```# {{translate text to commands}}"
@@ -139,27 +140,28 @@ class Summary(Plugin):
         self._insert_record(session_id, cmsg.msg_id, username, context.content, str(context.type), cmsg.create_time, int(is_triggered))
         # logger.debug("[群聊总结插件Summary] {}:{} ({})" .format(username, context.content, session_id))
 
-    def _translate_text_to_commands(self, text):
+    # def _translate_text_to_commands(self, text):
 
-        #炳加 以免出错：[main.py:251] - [Summary] translate failed: Did not find llm_api_key, please add an environment variable LLM_API_KEY which contains it, or pass llm_api_key as a named parameter.
-        os.environ["LLM_API_KEY"] = conf().get("open_ai_api_key", "")  # 必填
-        os.environ["PROXY"] = "http://10.104.0.4:3000"            # .0.4 是测试机的地址 选填
-        os.environ["MODEL_NAME"] = "gpt-4o-mini"                   # 选填
-        os.environ["DEBUG"] = True                   # 选填，debug模式
+    #     #炳加 以免出错：[main.py:251] - [Summary] translate failed: Did not find llm_api_key, please add an environment variable LLM_API_KEY which contains it, or pass llm_api_key as a named parameter.
+    #     os.environ["LLM_API_KEY"] = conf().get("open_ai_api_key", "")  # 必填
+    #     os.environ["PROXY"] = "http://10.104.0.4:3000"            # .0.4 是测试机的地址 选填
+    #     os.environ["MODEL_NAME"] = "gpt-4o-mini"                   # 选填
+    #     os.environ["DEBUG"] = True                   # 选填，debug模式
 
-        llm = ModelFactory().create_llm_model(**build_model_params({
-            "openai_api_key": conf().get("open_ai_api_key", ""),
-            "proxy": conf().get("proxy", ""),
-        }))
+    #     llm = ModelFactory().create_llm_model(**build_model_params({
+    #         "openai_api_key": conf().get("open_ai_api_key", ""),
+    #         "proxy": conf().get("proxy", ""),
+    #     }))
 
-        prompt = PromptTemplate(
-            input_variables=["input"],
-            template=TRANSLATE_PROMPT,
-        )
-        bot = LLMChain(llm=llm, prompt=prompt)
-        content = bot.run(text)
-        logger.debug(f"炳好奇【群聊总结插件】如何把文本【{text}】翻译成了命令【{content}】")
-        return content
+    #     prompt = PromptTemplate(
+    #         input_variables=["input"],
+    #         template=TRANSLATE_PROMPT,
+    #     )
+    #     bot = LLMChain(llm=llm, prompt=prompt)
+    #     content = bot.run(text)
+    #     logger.debug(f"炳好奇【群聊总结插件】如何把文本【{text}】翻译成了命令【{content}】")
+    #     return content
+
 
     def _check_tokens(self, records, max_tokens=3600):
         query = ""
