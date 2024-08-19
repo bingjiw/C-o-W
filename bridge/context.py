@@ -69,3 +69,46 @@ class Context:
 
     def __str__(self):
         return "Context(type={}, content={}, kwargs={})".format(self.type, self.content, self.kwargs)
+
+
+
+
+#炳加的代码
+#文本化的上下文消息，作为原Context的子类，增加了一个TextizedText属性，用于存储文本化的消息内容    
+#只在读取TextizedText且为None时才去转化非文本类型的内容为文本，
+# 并赋给TextizedText，因此只需转化一次
+# 第2次再读取TextizedText时无需再转化
+class TextizedContextMsg(Context):
+    def __init__(self, type: ContextType = None, content=None, kwargs=dict()):
+        self._textized_text = None
+        super().__init__(type, content, kwargs)
+
+    
+    def getTextizedText(self):
+        if self._textized_text is None:
+            #只在TextizedText为None时
+            # 才去转化非文本类型的内容为文本，
+
+            #如原本就是文本类型，直接把文本内容给TextizedText
+            if self.type == ContextType.TEXT:
+                self._textized_text = self.content
+
+            #如果是图片类型，调用Bridge的Recognize_Image_and_return_Text_Description_of_Image方法，返回图片的文本描述 
+            elif self.type == ContextType.IMAGE:
+                from bridge.bridge import Bridge
+                aReplyOfImage = Bridge().Recognize_Image_and_return_Text_Description_of_Image(self)
+                self._textized_text = f"[图片]:{aReplyOfImage.content}"
+
+            else :
+                self._textized_text = f"[此消息类型暂无TextizedText]{self.content}"
+
+        #_textized_text 有值后，返回 _textized_text
+        return self._textized_text
+
+
+
+    def __str__(self):
+        return "TextizedContextMsg(type={}, content={}, kwargs={}, TextizedText={})".format(
+            self.type, self.content, self.kwargs, self._textized_text
+        )
+

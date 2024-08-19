@@ -139,9 +139,13 @@ class ChatChannel(Channel):
         if (ctype == ContextType.FILE) :
             # 群聊中有人发文件，不用理它。不支持群聊内发的文件解读，且不一定是发给我机器人看的。
             if context.get("isgroup", False):  # 群聊
-                #对群聊中的文件，让函数最后会自动返回 context
-                # 因 group-talker 需要群聊中的文件 
-                pass
+                #对群聊中的文件，啥也不用干，直接退出函数，不要返回context对象
+                return
+
+                # #对群聊中的文件，让函数最后会自动返回 context
+                # # 因 group-talker 需要群聊中的文件 
+                # pass
+
             else:  # 单聊
                 #对单聊中的文件，啥也不用干。函数最后会自动返回 context 的
                 pass
