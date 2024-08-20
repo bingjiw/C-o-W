@@ -25,6 +25,8 @@ from channel.channel import Channel
 from common.dequeue import Dequeue
 from common import memory
 from plugins import *
+from channel.MemorableTalker import *
+
 
 try:
     from voice.audio_convert import any_to_wav
@@ -313,7 +315,6 @@ class ChatChannel(Channel):
 
         #先由group-talker看一眼
         #先由MemorableTalker看一眼，如果MemorableTalker有回答，就不用再调用传统的_generate_reply了
-        import MemorableTalker
         reply = MemorableTalker.Take_a_Look_Maybe_generate_reply(context)
 
         # 如果MemorableTalker没回答，但 又是必须回答的情况，则再调用传统的_generate_reply
