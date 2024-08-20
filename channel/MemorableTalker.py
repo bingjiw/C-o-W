@@ -67,7 +67,7 @@ def Take_a_Look_Maybe_generate_reply(aTextizedContextMsg: TextizedContextMsg) ->
     
     log2files(aTextizedContextMsg.RoomName, "", f"\n\n收到新消息：{aTextizedContextMsg.getTextizedText()}\n")
     
-    log2files(aTextizedContextMsg.RoomName, "    ", f"\n\n分析新消息：{aTextizedContextMsg.getTextizedText()}\n")
+    log2files(aTextizedContextMsg.RoomName, "    ", f"\n\n分析新消息：aaaaaa\nbbbbbbbbbbb\nccccccccccccc\n")
 
     #返回 None 表示：静听分析，但不说话（没到说话的时机）
     #返回 Reply 表示：静听分析后，有回答
