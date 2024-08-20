@@ -16,7 +16,7 @@ def Take_a_Look_Maybe_generate_reply(aTextizedContextMsg: TextizedContextMsg) ->
     Reply: 生成的回复，如果没有合适的回复则返回 None。
     """
     
-    WriteLog2Files(aTextizedContextMsg.RoomName, "", f"\n　\n　收到新消息：{aTextizedContextMsg.getTextizedText()}\n")
+    WriteLog2Files(aTextizedContextMsg.RoomName, "", f"\n　\n　【{aTextizedContextMsg.SpeakerNickName}】说：\n{aTextizedContextMsg.getTextizedText()}\n")
     
     WriteLog2Files(aTextizedContextMsg.RoomName, "    ", f"分析：aaaaaa\nbbbbbbbbbbb\nccccccccccccc\n")
 
