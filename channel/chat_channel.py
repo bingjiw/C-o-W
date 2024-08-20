@@ -315,7 +315,7 @@ class ChatChannel(Channel):
 
         #先由group-talker看一眼
         #先由MemorableTalker看一眼，如果MemorableTalker有回答，就不用再调用传统的_generate_reply了
-        reply = MemorableTalker.Take_a_Look_Maybe_generate_reply(context)
+        reply = Take_a_Look_Maybe_generate_reply(context)
 
         # 如果MemorableTalker没回答，但 又是必须回答的情况，则再调用传统的_generate_reply
         # 必须回答的情况：私聊  或  群聊被@了
