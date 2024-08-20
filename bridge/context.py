@@ -135,10 +135,10 @@ class TextizedContextMsg(Context):
                 self._textized_text = self.content
 
             #如果是图片类型，调用Bridge的Recognize_Image_and_return_Text_Description_of_Image方法，返回图片的文本描述 
-            elif self.type == ContextType.IMAGE:
-                from bridge.bridge import Bridge
-                aReplyOfImage = Bridge().Recognize_Image_and_return_Text_Description_of_Image(self)
-                self._textized_text = f"[图片]:{aReplyOfImage.content}"
+            # elif self.type == ContextType.IMAGE:
+            #     from bridge.bridge import Bridge
+            #     aReplyOfImage = Bridge().Recognize_Image_and_return_Text_Description_of_Image(self)
+            #     self._textized_text = f"[图片]:{aReplyOfImage.content}"
 
             else :
                 self._textized_text = f"[此消息类型暂无TextizedText]{self.content}"

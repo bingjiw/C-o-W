@@ -38,3 +38,4 @@ config.生产.json
 !plugins/plugin_summary/**/
 test_BJ_xunfei_voice_to_text.py
 voice/xunfei/_bj_test_and_demo
+ChatRoomLogDir/
