@@ -69,7 +69,7 @@ class ChatChannel(Channel):
             return text
 
 
-        context = Context(ctype, content)
+        context = TextizedContextMsg(ctype, content)
         context.kwargs = kwargs
         # context首次传入时，origin_ctype是None,
         # 引入的起因是：当输入语音时，会嵌套生成两个context，第一步语音转文本，第二步通过文本生成文字回复。
@@ -96,10 +96,17 @@ class ChatChannel(Channel):
             context["openai_api_key"] = user_data.get("openai_api_key")
             
             context["gpt_model"] = user_data.get("gpt_model")
-            if context.get("isgroup", False):
+            
+            if context.IsGroupChat :
                 group_name = cmsg.other_user_nickname
-                group_id = cmsg.other_user_id
+                context.GroupName = group_name
 
+                group_id = cmsg.other_user_id
+                context.GroupID = group_id
+
+                ##########################
+                #### 第1级过滤：群名过滤 ####
+                #群名过滤，检查 对来源于此群的消息 要不要 响应，还是忽略 
                 group_name_white_list = config.get("group_name_white_list", [])
                 group_name_keyword_white_list = config.get("group_name_keyword_white_list", [])
                 if any(
@@ -119,14 +126,21 @@ class ChatChannel(Channel):
                     ):
                         session_id = group_id
                 else:
+                    #群名过滤，对不在白名单的群名，不组装context
+                    #且直接return后，不会再往下走
                     logger.debug(f"No need reply, groupName not in whitelist, group_name={group_name}")
                     return None
+                
                 context["session_id"] = session_id
                 context["receiver"] = group_id
             else:
                 context["session_id"] = cmsg.other_user_id
                 context["receiver"] = cmsg.other_user_id
+
+            #至此 context  组装完成
+
             e_context = PluginManager().emit_event(EventContext(Event.ON_RECEIVE_MESSAGE, {"channel": self, "context": context}))
+            
             context = e_context["context"]
             if e_context.is_pass() or context is None:
                 return context
@@ -138,7 +152,7 @@ class ChatChannel(Channel):
         # 若是 文件
         if (ctype == ContextType.FILE) :
             # 群聊中有人发文件，不用理它。不支持群聊内发的文件解读，且不一定是发给我机器人看的。
-            if context.get("isgroup", False):  # 群聊
+            if context.IsGroupChat:  # 群聊
                 #对群聊中的文件，啥也不用干，直接退出函数，不要返回context对象
                 return
 
@@ -163,21 +177,40 @@ class ChatChannel(Channel):
                 #logger.debug("[chat_channel]reference query skipped")
                 #炳：取消了原来对引用的跳过 return None
 
+
+            ###########################################
+            #### 第2级过滤：检查 群聊消息 有没有 @机器人的前缀 或 某些触发机器人回答的关键字 ####
             nick_name_black_list = conf().get("nick_name_black_list", [])
-            if context.get("isgroup", False):  # 群聊
-                # 校验关键字
+
+            # 群聊 ################
+            if context.IsGroupChat :  # 群聊
+                # 检查 群聊消息 有没有 @机器人的前缀 或 某些触发机器人回答的关键字
+                
+                # 前缀：有没有匹配到
                 match_prefix = check_prefix(content, conf().get("group_chat_prefix"))
+                
+                # 包含关键字：有没有匹配到
                 match_contain = check_contain(content, conf().get("group_chat_keyword"))
+                
                 flag = False
                 if context["msg"].to_user_id != context["msg"].actual_user_id:
-                    if match_prefix is not None or match_contain is not None:
+
+                    # 消息发送者的 昵称
+                    nick_name = context["msg"].actual_user_nickname
+                    context.SpeakerNickName = nick_name #记下说话人的昵称
+
+                    context.Is_at_Me_in_Group = match_prefix is not None or match_contain is not None
+                    if context.Is_at_Me_in_Group:
                         flag = True
                         if match_prefix:
                             content = content.replace(match_prefix, "", 1).strip()
+                    
+                    #是否 群聊 被@了
                     if context["msg"].is_at:
-                        nick_name = context["msg"].actual_user_nickname
+
                         if nick_name and nick_name in nick_name_black_list:
-                            # 黑名单过滤
+                            # 第3级过滤：黑名单过滤
+                            # 第3级过滤：消息发送者的 昵称黑名单 过滤 
                             logger.warning(f"[chat_channel]群聊时，昵称【{nick_name}】在昵称黑名单nick_name_black_list中, 忽略")
                             return None
 
@@ -198,12 +231,25 @@ class ChatChannel(Channel):
                         content = subtract_res
                         logger.info(f"群聊中收到一条消息，删除所有 @ 之后的内容是：{content}")
 
+                #很重要的标志信息：在群聊中，是否被@了。
+                #因若被@，则必须要回答。
+                #否则group-talker可答 可不答
+                context.Being_at_Me_in_Group = flag
+
                 if not flag:
                     if context["origin_ctype"] == ContextType.VOICE:
                         logger.info("[chat_channel]receive group voice, but checkprefix didn't match")
-                    return None
+                    
+                    #炳改前  原本是：return None
+                    #因 group-talker（主动聊天者功能） 不论对方是不是 @我机器人，都要处理，都有可能会回复。
+
+
+            # 单聊 ################
             else:  # 单聊
                 nick_name = context["msg"].from_user_nickname
+
+                context.SpeakerNickName = nick_name #记下说话人的昵称
+
                 if nick_name and nick_name in nick_name_black_list:
                     # 黑名单过滤
                     # 这里是第2次黑名单过滤，滤文字类。      第1次过滤 滤：语音与图片
@@ -256,7 +302,7 @@ class ChatChannel(Channel):
         from_user_nick_name = context["msg"].from_user_nickname
         if (                                            # 如发来的是  语音、图片、文件、公众号分享，且是黑名单中的人，则忽略跳过
             (context.type == ContextType.VOICE or context.type == ContextType.IMAGE or context.type == ContextType.FILE or context.type == ContextType.SHARING) and       
-            not context.get("isgroup", False) and       # 且是单聊（不是群聊）
+            context.IsSingleChat and       # 且是单聊
             from_user_nick_name and                     # 且发送者有呢称
             from_user_nick_name in nick_name_black_list # 且发送者呢称在黑名单中
         ):
@@ -265,17 +311,24 @@ class ChatChannel(Channel):
             return
         #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
+        #先由group-talker看一眼
+        #先由MemorableTalker看一眼，如果MemorableTalker有回答，就不用再调用传统的_generate_reply了
+        import MemorableTalker
+        reply = MemorableTalker.Take_a_Look_Maybe_generate_reply(context)
 
-        # reply的构建步骤        
-        reply = self._generate_reply(context)
+        # 如果MemorableTalker没回答，但 又是必须回答的情况，则再调用传统的_generate_reply
+        # 必须回答的情况：私聊  或  群聊被@了
+        if (reply is None) and (context.IsSingleChat or (context.IsGroupChat and context.Being_at_Me_in_Group)) :
+            # reply的构建步骤        
+            reply = self._generate_reply(context)
         
         # 若 reply 为空，说明_generate_reply内部出错了，直接退出，不发任何错误消息给用户
         if reply is None: 
             return
-        
+        #否则如果reply是ERROR
         # 仅在单聊 且 是文件或分享 且 ReplyType.ERROR 时，才回复用户 出错的情况
         # 如有些文件类型无法处理或超过大小，或视频号分享 等 暂不支持的类型消息，就会返回 ReplyType.ERROR
-        elif (not context.get("isgroup")) and (context.type==ContextType.FILE or context.type==ContextType.SHARING) and (reply.type == ReplyType.ERROR) :
+        elif (context.IsSingleChat) and (context.type==ContextType.FILE or context.type==ContextType.SHARING) and (reply.type == ReplyType.ERROR) :
             self._send_reply(context, reply)
 
         else :
@@ -372,11 +425,13 @@ class ChatChannel(Channel):
                     # logger.warning("[chat_channel]delete temp file error: " + str(e))
 
                 #前面把语音变成文字后，再调用一遍自己（把消息当作文本来处理并调用）自己本身这个函数_generate_reply
-                if reply.type == ReplyType.TEXT:
+                if reply.type == ReplyType.TEXT: #如果回复类型是文本，基本上大多数都是文本回复
                     #语音识别后，给用户一个回馈，以免用户等得不耐烦（3次调用很费时：语音+1答+2答）
                     _send_info(e_context, f"你说：\n\n“{reply.content}”\n\n思考如何答你...")
 
+                    # 语音识别成功后，重新 组装一个新的文本类型的context
                     new_context = self._compose_context(ContextType.TEXT, reply.content, **context.kwargs)
+                    
                     if new_context:
                         # 重复调用函数自己： 在_generate_reply函数中调用_generate_reply函数自己
                         reply = self._generate_reply(new_context)
@@ -397,8 +452,8 @@ class ChatChannel(Channel):
                 
                 #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
                 #炳：应在这里跟用户说“收到图片，可在3分钟内问询与图片相关的问题”
-                #   如果是  单聊（不是群聊）  才说 “收到一张图片。。。。   群聊就静悄悄地存好图片（不发声）
-                if not context.get("isgroup", False) :
+                #   如果是  单聊  才说 “收到一张图片。。。。   群聊就静悄悄地存好图片（不发声）
+                if context.IsSingleChat :
                     context["channel"] = e_context["channel"]
                     #如果上一张图还没有问答处理掉，又来一张图（一次发了多张图）
                     if memory.USER_IMAGE_CACHE.get(context["session_id"]) is not None:
@@ -502,7 +557,7 @@ class ChatChannel(Channel):
                     if desire_rtype == ReplyType.VOICE and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                         reply = super().build_text_to_voice(reply.content)
                         return self._decorate_reply(context, reply)
-                    if context.get("isgroup", False):
+                    if context.IsGroupChat:
                         if not context.get("no_need_at", False):
                             reply_text = "@" + context["msg"].actual_user_nickname + "\n" + reply_text.strip()
                         reply_text = conf().get("group_chat_reply_prefix", "") + reply_text + conf().get("group_chat_reply_suffix", "")

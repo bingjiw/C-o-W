@@ -80,7 +80,25 @@ class Context:
 # 第2次再读取TextizedText时无需再转化
 class TextizedContextMsg(Context):
     def __init__(self, type: ContextType = None, content=None, kwargs=dict()):
+        
+        ###################
+        #内部 实例变量
         self._textized_text = None
+
+        ###################
+        #公开 实例变量，外部像访问属性一样可直接访问
+        self.Is_at_Me_in_Group = False 
+        self.GroupName = None
+        self.GroupID = None
+
+        #说话人的昵称，单聊时为对方昵称，群聊时为说话人昵称
+        self.SpeakerNickName = None
+
+        #很重要的标志信息：在群聊中，是否被@了。
+        #因若被@，则必须要回答。
+        #否则group-talker可答 可不答
+        self.Being_at_Me_in_Group = False
+
         super().__init__(type, content, kwargs)
 
     
@@ -102,7 +120,7 @@ class TextizedContextMsg(Context):
             else :
                 self._textized_text = f"[此消息类型暂无TextizedText]{self.content}"
 
-        #_textized_text 有值后，返回 _textized_text
+        #如果 _textized_text 已经有值后，则返回 _textized_text
         return self._textized_text
 
 
@@ -112,3 +130,26 @@ class TextizedContextMsg(Context):
             self.type, self.content, self.kwargs, self._textized_text
         )
 
+
+    #是否是群聊
+    @property
+    def IsGroupChat(self):
+        return super().get("isgroup", False)
+    
+
+    #是否是单聊
+    @property
+    def IsSingleChat(self):
+        return not self.IsGroupChat
+    
+
+    #sessionID聊天的会话thread的ID
+    @property
+    def SessionID(self):
+        return super()["session_id"]
+    
+
+    #当回复此消息时，发给谁，也就是： 回复的接收者
+    @property
+    def ReceiverID_WhenReply(self):
+        return super()["receiver"]
