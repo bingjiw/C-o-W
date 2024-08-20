@@ -2,6 +2,28 @@
 
 from enum import Enum
 
+import re
+
+def sanitize_filename(filename):
+    """
+    去除字符串中不能用于文件名的字符
+    :param filename: 原始文件名字符串
+    :return: 处理后的文件名字符串
+    """
+    # 定义不能用于文件名的字符
+    invalid_chars = r'[\/:*?"<>|]'
+    
+    # 使用正则表达式替换掉这些字符
+    sanitized_filename = re.sub(invalid_chars, "", filename)
+    
+    return sanitized_filename
+
+# # 示例
+# original_filename = "invalid:/file*name?.txt"
+# clean_filename = sanitize_filename(original_filename)
+# print(clean_filename)  # 输出: invalidfilename.txt
+
+
 
 class ContextType(Enum):
     TEXT = 1  # 文本消息
@@ -84,6 +106,7 @@ class TextizedContextMsg(Context):
         ###################
         #内部 实例变量
         self._textized_text = None
+        self._room_name = None
 
         ###################
         #公开 实例变量，外部像访问属性一样可直接访问
@@ -153,3 +176,18 @@ class TextizedContextMsg(Context):
     @property
     def ReceiverID_WhenReply(self):
         return super()["receiver"]
+    
+
+
+    #聊天房间名，单聊时为对方昵称，群聊时为群名。并去除不能用于文件名的字符
+    @property
+    def RoomName(self):
+        if self._room_name is None :
+            if self.IsGroupChat:
+                self._room_name = self.GroupName
+            else:
+                self._room_name = self.SpeakerNickName
+        
+            self._room_name = sanitize_filename(self._room_name)
+
+        return self._room_name
