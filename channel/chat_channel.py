@@ -100,11 +100,8 @@ class ChatChannel(Channel):
             context["gpt_model"] = user_data.get("gpt_model")
             
             if context.IsGroupChat :
-                group_name = cmsg.other_user_nickname
-                context.GroupName = group_name
-
-                group_id = cmsg.other_user_id
-                context.GroupID = group_id
+                group_name = context.GroupName
+                group_id = context.GroupID
 
                 ##########################
                 #### 第1级过滤：群名过滤 ####
@@ -198,8 +195,7 @@ class ChatChannel(Channel):
                 if context["msg"].to_user_id != context["msg"].actual_user_id:
 
                     # 消息发送者的 昵称
-                    nick_name = context["msg"].actual_user_nickname
-                    context.SpeakerNickName = nick_name #记下说话人的昵称， 在 群聊 中
+                    nick_name = context.SpeakerNickName
 
                     context.Is_at_Me_in_Group = match_prefix is not None or match_contain is not None
                     if context.Is_at_Me_in_Group:
@@ -248,9 +244,7 @@ class ChatChannel(Channel):
 
             # 单聊 ################
             else:  # 单聊
-                nick_name = context["msg"].from_user_nickname
-
-                context.SpeakerNickName = nick_name #记下说话人的昵称
+                nick_name = context.SpeakerNickName
 
                 if nick_name and nick_name in nick_name_black_list:
                     # 黑名单过滤

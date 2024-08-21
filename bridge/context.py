@@ -1,15 +1,19 @@
 # encoding:utf-8
-
+from common.log import logger
 from enum import Enum
 
 import re
 
-def sanitize_filename(filename):
+def sanitize_filename(filename: str) -> str :
     """
     去除字符串中不能用于文件名的字符
     :param filename: 原始文件名字符串
     :return: 处理后的文件名字符串
     """
+
+    if not isinstance(filename, (str, bytes)):
+        logger.error(f"遇到filename参数类型不是str，而是：{filename.__class__}，其值为：{filename}")
+
     # 定义不能用于文件名的字符
     invalid_chars = r'[\/:*?"<>|]'
     
@@ -107,15 +111,14 @@ class TextizedContextMsg(Context):
         #内部 实例变量
         self._textized_text = None
         self._room_name = None
+        #说话人的昵称，单聊时为对方昵称，群聊时为说话人昵称
+        self._speakerNickName = None        
 
         ###################
         #公开 实例变量，外部像访问属性一样可直接访问
         self.Is_at_Me_in_Group = False 
-        self.GroupName = None
-        self.GroupID = None
-
-        #说话人的昵称，单聊时为对方昵称，群聊时为说话人昵称
-        self.SpeakerNickName = None
+        # 改为属性方法 self.GroupName = None
+        # 改为属性方法 self.GroupID = None
 
         #很重要的标志信息：在群聊中，是否被@了。
         #因若被@，则必须要回答。
@@ -166,6 +169,36 @@ class TextizedContextMsg(Context):
             self.type, self.content, self.kwargs, self._textized_text
         )
 
+
+    #群聊时的群ID
+    @property
+    def GroupID(self):
+        if self.IsGroupChat:
+            return super()["msg"].other_user_id
+        else:
+            return None
+        
+
+    #群聊时的群名
+    @property
+    def GroupName(self):
+        if self.IsGroupChat:
+            return super()["msg"].other_user_nickname
+        else:
+            return None
+
+        
+    #说话人的昵称
+    @property
+    def SpeakerNickName(self):
+        if self._speakerNickName is None:
+            if self.IsGroupChat:
+                self._speakerNickName = super()["msg"].actual_user_nickname
+            else:
+                self._speakerNickName = super()["msg"].from_user_nickname
+
+        return self._speakerNickName
+    
 
     #是否是群聊
     @property
