@@ -3,7 +3,7 @@
 from channel.ChatRoomLog import *
 from bridge.reply import *
 from bridge.context import *
-
+import datetime
 
 def Take_a_Look_Maybe_generate_reply(aTextizedContextMsg: TextizedContextMsg) -> Reply:
     """
@@ -16,8 +16,14 @@ def Take_a_Look_Maybe_generate_reply(aTextizedContextMsg: TextizedContextMsg) ->
     Reply: 生成的回复，如果没有合适的回复则返回 None。
     """
     
-    WriteLog2Files(aTextizedContextMsg.RoomName, "", f"\n　\n　【{aTextizedContextMsg.SpeakerNickName}】说：\n{aTextizedContextMsg.getTextizedText()}\n")
+
+    #记日期
+    WriteLog2Files(aTextizedContextMsg.RoomName, "", datetime.datetime.now().strftime('%d日%H:%M:%S'))
+
+    #记收到消息
+    WriteLog2Files(aTextizedContextMsg.RoomName, "", f"　\n　\n【{aTextizedContextMsg.SpeakerNickName}】说：\n{aTextizedContextMsg.getTextizedText()}\n")
     
+    #记分析
     WriteLog2Files(aTextizedContextMsg.RoomName, "    ", f"分析：aaaaaa\nbbbbbbbbbbb\nccccccccccccc\n")
 
     #返回 None 表示：静听分析，但不说话（没到说话的时机）

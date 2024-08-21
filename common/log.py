@@ -16,14 +16,18 @@ def _reset_logger(log):
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     )
-    file_handle = logging.FileHandler("run.log", encoding="utf-8")
-    file_handle.setFormatter(
-        logging.Formatter(
-            "[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d] - %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-    )
-    log.addHandler(file_handle)
+
+    # 炳注：因SHELL-stdout.log记录的日志比 run.log 更详细（如print命令的内容也会记录），
+    #      所以不再记录 run.log
+    # file_handle = logging.FileHandler("run.log", encoding="utf-8")
+    # file_handle.setFormatter(
+    #     logging.Formatter(
+    #         "[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d] - %(message)s",
+    #         datefmt="%Y-%m-%d %H:%M:%S",
+    #     )
+    # )
+    # log.addHandler(file_handle)
+
     log.addHandler(console_handle)
 
 

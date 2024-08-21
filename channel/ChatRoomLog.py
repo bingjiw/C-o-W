@@ -11,7 +11,7 @@ formatter = logging.Formatter(
 )
 
 # 创建 总日志的FileHandler 对象
-total_logger_file_handler = logging.FileHandler("ChatRoomLogDir/总日志.log", encoding="utf-8")
+total_logger_file_handler = logging.FileHandler("LogDir-ChatRoom/-(ALL_ROOMs)-.log", encoding="utf-8")
 total_logger_file_handler.setFormatter(formatter)
 total_logger.addHandler(total_logger_file_handler)
 
@@ -37,7 +37,7 @@ def WriteLog2Files(strRoomName:str, strIndentSpaces:str, strLogText:str):
     # 否则就 新建 聊天房间的日志的FileHandler 对象，并记录到 handlers_dict 中，以便后用
     aRoomLogFileHandler = all_chat_rooms_log_file_handlers_dict.get(strRoomName)
     if aRoomLogFileHandler is None:
-        aRoomLogFileHandler = logging.FileHandler(f"ChatRoomLogDir/{strRoomName}.log", encoding="utf-8")
+        aRoomLogFileHandler = logging.FileHandler(f"LogDir-ChatRoom/{strRoomName}.log", encoding="utf-8")
         aRoomLogFileHandler.setFormatter(formatter)
         all_chat_rooms_log_file_handlers_dict[strRoomName] = aRoomLogFileHandler
     
