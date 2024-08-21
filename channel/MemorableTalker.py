@@ -20,7 +20,7 @@ def Take_a_Look_Maybe_generate_reply(aTextizedContextMsg: TextizedContextMsg) ->
     
     #记 日期
     #记 收到的消息
-    WriteLog2Files(aTextizedContextMsg.RoomName, "", f"　\n　\nChatRoom【{aTextizedContextMsg.RoomName}】内 {datetime.datetime.now().strftime('%d日%H:%M:%S')} 【{aTextizedContextMsg.SpeakerNickName}】说：\n{aTextizedContextMsg.getTextizedText()}\n")
+    WriteLog2Files(aTextizedContextMsg.RoomName, "", f"　\n　\n{aTextizedContextMsg.RoomName}\n{datetime.datetime.now().strftime('%d日%H:%M:%S')} 【{aTextizedContextMsg.SpeakerNickName}】说：\n{aTextizedContextMsg.getTextizedText()}\n")
     
     #记分析
     #WriteLog2Files(aTextizedContextMsg.RoomName, "    ", f"分析:aaaaaa\nbbbbbbbbbbb\nccccccccccccc\n")
