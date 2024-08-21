@@ -27,7 +27,7 @@ if [ -f "run.log" ]; then
 fi
 echo "# 检查并重命名 SHELL-stdout.log，新运行用新建文件来放日志，防日志文件越来越大拖慢系统性能"
 if [ -f "SHELL-stdout.log" ]; then
-    mv "SHELL-stdout.log" "output.${current_datetime}_Old.log"
+    mv "SHELL-stdout.log" "SHELL-stdout.${current_datetime}_Old.log"
 fi
 cd ..
 
