@@ -174,7 +174,7 @@ class TextizedContextMsg(Context):
     @property
     def GroupID(self):
         if self.IsGroupChat:
-            return super()["msg"].other_user_id
+            return self.__getitem__("msg").other_user_id
         else:
             return None
         
@@ -183,7 +183,7 @@ class TextizedContextMsg(Context):
     @property
     def GroupName(self):
         if self.IsGroupChat:
-            return super()["msg"].other_user_nickname
+            return self.__getitem__("msg").other_user_nickname
         else:
             return None
 
@@ -193,9 +193,9 @@ class TextizedContextMsg(Context):
     def SpeakerNickName(self):
         if self._speakerNickName is None:
             if self.IsGroupChat:
-                self._speakerNickName = super()["msg"].actual_user_nickname
+                self._speakerNickName = self.__getitem__("msg").actual_user_nickname
             else:
-                self._speakerNickName = super()["msg"].from_user_nickname
+                self._speakerNickName = self.__getitem__("msg").from_user_nickname
 
         return self._speakerNickName
     
@@ -215,14 +215,13 @@ class TextizedContextMsg(Context):
     #sessionID聊天的会话thread的ID
     @property
     def SessionID(self):
-        return super()["session_id"]
+        return super().__getitem__("session_id")
     
 
     #当回复此消息时，发给谁，也就是： 回复的接收者
     @property
     def ReceiverID_WhenReply(self):
-        return super()["receiver"]
-    
+        return super().__getitem__("receiver")
 
 
     #聊天房间名，单聊时为对方昵称，群聊时为群名。并去除不能用于文件名的字符
