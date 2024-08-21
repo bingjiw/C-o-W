@@ -54,6 +54,9 @@ available_setting = {
     # wss://spark-api.xf-yun.com/v1.1/chat
     #上方是炳加的：AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
+    "mem0_api_key": "m0-6JSFvAAo90jgnUSVsuoBGpOf8QWiLIPbMtEMI0QA",
+
+
     # openai api配置
     "open_ai_api_key": "",  # openai api key
     # openai apibase，当use_azure_chatgpt为true时，需要设置对应的api base
