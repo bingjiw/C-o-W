@@ -17,14 +17,15 @@ def Take_a_Look_Maybe_generate_reply(aTextizedContextMsg: TextizedContextMsg) ->
     """
     
 
-    #记日期
-    WriteLog2Files(aTextizedContextMsg.RoomName, "", datetime.datetime.now().strftime('%d日%H:%M:%S'))
+    
+    WriteLog2Files(aTextizedContextMsg.RoomName, "", )
 
-    #记收到消息
-    WriteLog2Files(aTextizedContextMsg.RoomName, "", f"　\n　\n【{aTextizedContextMsg.SpeakerNickName}】说：\n{aTextizedContextMsg.getTextizedText()}\n")
+    #记 日期
+    #记 收到的消息
+    WriteLog2Files(aTextizedContextMsg.RoomName, "", f"　\n　\n{datetime.datetime.now().strftime('%d日%H:%M:%S')} 【{aTextizedContextMsg.SpeakerNickName}】说：\n{aTextizedContextMsg.getTextizedText()}\n")
     
     #记分析
-    WriteLog2Files(aTextizedContextMsg.RoomName, "    ", f"分析：aaaaaa\nbbbbbbbbbbb\nccccccccccccc\n")
+    WriteLog2Files(aTextizedContextMsg.RoomName, "    ", f"分析:aaaaaa\nbbbbbbbbbbb\nccccccccccccc\n")
 
     #返回 None 表示：静听分析，但不说话（没到说话的时机）
     #返回 Reply 表示：静听分析后，有回答

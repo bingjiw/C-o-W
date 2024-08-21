@@ -2,7 +2,7 @@ import logging
 
 # 创建 总的日志 logger 对象
 total_logger = logging.getLogger("MemorableTalker")
-total_logger.setLevel(logging.INFO)
+total_logger.setLevel(logging.DEBUG) #要记录所有的日志，包括 DEBUG
 
 #日志格式
 formatter = logging.Formatter(
@@ -10,14 +10,24 @@ formatter = logging.Formatter(
     datefmt=""
 )
 
-# 创建 总日志的FileHandler 对象
-total_logger_file_handler = logging.FileHandler("LogDir-ChatRoom/-(ALL_ROOMs)-.log", encoding="utf-8")
-total_logger_file_handler.setFormatter(formatter)
-total_logger.addHandler(total_logger_file_handler)
+# 检查是否已经有相同的 FileHandler
+log_file_path = "LogDir-ChatRoom/-(ALL_ROOMs)-.log"
+handler_exists = any(
+    isinstance(handler, logging.FileHandler) and handler.baseFilename == log_file_path
+    for handler in total_logger.handlers
+)
+
+#防止被执行2次，
+# 之前没检查时，因为每次 total_logger 记日志时，会有2条一样的日志被写到日志
+if not handler_exists:
+    # 创建 总日志的FileHandler 对象
+    total_logger_file_handler = logging.FileHandler(log_file_path, encoding="utf-8")
+    total_logger_file_handler.setFormatter(formatter)
+    total_logger.addHandler(total_logger_file_handler)
 
 # 创建 子模块日志(用于记录每个 聊天房间) 记录器
 room_logger = logging.getLogger(f"MemorableTalker.Room")
-room_logger.setLevel(logging.INFO)
+room_logger.setLevel(logging.DEBUG) #要记录所有的日志，包括 DEBUG
 
 # 记录 每个 聊天房间的日志的FileHandler 对象
 # 性能开销：
