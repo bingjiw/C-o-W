@@ -419,7 +419,7 @@ class ChatChannel(Channel):
                 #如果转成功（不是上面的ERROR类型），且回复类型是文本
                 elif convertResultReply.type == ReplyType.TEXT: 
                     #语音识别后，给用户一个回馈，以免用户等得不耐烦（3次调用很费时：语音+1答+2答）
-                    _send_info(e_context, f"你说：\n\n“{reply.content}”\n\n思考如何答你...")
+                    _send_info(e_context, f"你说：\n\n“{convertResultReply.content}”\n\n思考如何答你...")
 
                     # 炳：语音识别成功后，不要像从前那样：重新 组装一个新的文本类型的context
                     # 炳：直接给原context的TextizedText设为转换成功后的值。

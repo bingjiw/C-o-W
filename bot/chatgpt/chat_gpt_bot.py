@@ -60,7 +60,7 @@ class ChatGPTBot(Bot, OpenAIImage):
 
     def reply(self, query, context=None):
         # acquire reply content
-        if context.type == ContextType.TEXT:
+        if context.type == ContextType.TEXT or (context.TextizedText is not None) :
             logger.info("[CHATGPT] query={}".format(query))
 
             session_id = context["session_id"]
