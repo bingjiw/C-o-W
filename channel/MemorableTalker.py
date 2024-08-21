@@ -18,8 +18,6 @@ def Take_a_Look_Maybe_generate_reply(aTextizedContextMsg: TextizedContextMsg) ->
     
 
     
-    WriteLog2Files(aTextizedContextMsg.RoomName, "", )
-
     #记 日期
     #记 收到的消息
     WriteLog2Files(aTextizedContextMsg.RoomName, "", f"　\n　\n{datetime.datetime.now().strftime('%d日%H:%M:%S')} 【{aTextizedContextMsg.SpeakerNickName}】说：\n{aTextizedContextMsg.getTextizedText()}\n")
