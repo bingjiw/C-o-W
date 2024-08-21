@@ -199,7 +199,7 @@ class ChatChannel(Channel):
 
                     # 消息发送者的 昵称
                     nick_name = context["msg"].actual_user_nickname
-                    context.SpeakerNickName = nick_name #记下说话人的昵称
+                    context.SpeakerNickName = nick_name #记下说话人的昵称， 在 群聊 中
 
                     context.Is_at_Me_in_Group = match_prefix is not None or match_contain is not None
                     if context.Is_at_Me_in_Group:
@@ -344,6 +344,42 @@ class ChatChannel(Channel):
 
 
 
+    #炳重构：试图转语音为文本，可能会失败（如语音识别失败）
+    def _Try_to_Convert_Voice_to_Text(self, context):
+        """
+        处理语音消息，输入 Context 对象实例，输出 Reply 对象实例。
+        
+        :param context: Context 对象实例
+        :return: Reply 对象实例
+        """
+        
+        cmsg = context["msg"]
+        cmsg.prepare()
+        file_path = context.content
+        wav_path = os.path.splitext(file_path)[0] + ".wav"
+        
+        try:
+            any_to_wav(file_path, wav_path)
+        except Exception as e:  # 转换失败，直接使用mp3，对于某些api，mp3也可以识别
+            logger.warning("[chat_channel] any to wav error, use raw path. " + str(e))
+            wav_path = file_path
+        
+        # 语音识别
+        reply = super().build_voice_to_text(wav_path)
+        
+        # 删除临时文件
+        try:
+            os.remove(file_path)
+            if wav_path != file_path:
+                os.remove(wav_path)
+        except Exception as e:
+            pass
+            # logger.warning("[chat_channel] delete temp file error: " + str(e))
+        
+        return reply
+
+
+
     def _generate_reply(self, context: Context, reply: Reply = Reply()) -> Reply:
 
         #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
@@ -375,8 +411,31 @@ class ChatChannel(Channel):
         if not e_context.is_pass():
             logger.debug("[chat_channel] ready to handle context: type={}, content={}".format(context.type, context.content))
             
-            # 如果是 文字 或 画图
-            if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  
+            ###########################################
+            # 如果是 语音消息, 则偿试转为文本，若成功转为文本，则接下来按文本处理
+            if context.type == ContextType.VOICE:  
+
+                convertResultReply = self._Try_to_Convert_Voice_to_Text(context)
+        
+                # 如果语音识别失败
+                if convertResultReply.type == ReplyType.ERROR or convertResultReply.content == "":
+                    _send_info(context, f"语音识别失败，无法识别你说的话\n\n请发文字消息提问\n\n{convertResultReply.content}")
+                    return convertResultReply
+                
+                #如果转成功（不是上面的ERROR类型），且回复类型是文本
+                elif convertResultReply.type == ReplyType.TEXT: 
+                    #语音识别后，给用户一个回馈，以免用户等得不耐烦（3次调用很费时：语音+1答+2答）
+                    _send_info(e_context, f"你说：\n\n“{reply.content}”\n\n思考如何答你...")
+
+                    # 炳：语音识别成功后，不要像从前那样：重新 组装一个新的文本类型的context
+                    # 炳：直接给原context的TextizedText设为转换成功后的值。
+                    context.TextizedText = convertResultReply.content
+                    
+            # 若经上面 语音转文本成功 后，可继续执行下面的代码处理转换后的文本        
+            ###########################################
+            # 如果是  文字 或 画图
+            # 炳加：             或 TextizedText有值（非None）
+            if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE or (context.TextizedText is not None):  
                 context["channel"] = e_context["channel"]
 
                 #炳加：
@@ -391,62 +450,9 @@ class ChatChannel(Channel):
                         context.content = context.content.removeprefix(prefix)
 
                 #即使看不见引用，也试图回答用户
-                reply = super().build_reply_content(context.content, context)
+                reply = super().build_reply_content(context.TextizedText, context)
                 #炳注：其实以上这句才是真正让bot去调用LLM回答的命令，
-                # _generate_reply 本身只是一个空壳子：其最重要的工作就是把语音变成文本后再调用一次自己
-                # （其实还是在第2次调用时 通过上面这句 发到LLM的）
 
-            # 如果是 语音消息
-            elif context.type == ContextType.VOICE:  
-                cmsg = context["msg"]
-                cmsg.prepare()
-                file_path = context.content
-                wav_path = os.path.splitext(file_path)[0] + ".wav"
-                try:
-                    any_to_wav(file_path, wav_path)
-                except Exception as e:  # 转换失败，直接使用mp3，对于某些api，mp3也可以识别
-                    logger.warning("[chat_channel]any to wav error, use raw path. " + str(e))
-                    wav_path = file_path
-                
-                # 语音识别
-                reply = super().build_voice_to_text(wav_path)
-                
-                # 如果语音识别失败，
-                if reply.type == ReplyType.ERROR or reply.content == "":
-                    _send_info(e_context, f"语音识别失败，无法识别你说的话\n\n请发文字消息提问\n\n{reply.content}")
-                    return
-
-                # 删除临时文件
-                try:
-                    os.remove(file_path)
-                    if wav_path != file_path:
-                        os.remove(wav_path)
-                except Exception as e:
-                    pass
-                    # logger.warning("[chat_channel]delete temp file error: " + str(e))
-
-                #前面把语音变成文字后，再调用一遍自己（把消息当作文本来处理并调用）自己本身这个函数_generate_reply
-                if reply.type == ReplyType.TEXT: #如果回复类型是文本，基本上大多数都是文本回复
-                    #语音识别后，给用户一个回馈，以免用户等得不耐烦（3次调用很费时：语音+1答+2答）
-                    _send_info(e_context, f"你说：\n\n“{reply.content}”\n\n思考如何答你...")
-
-                    # 语音识别成功后，重新 组装一个新的文本类型的context
-                    new_context = self._compose_context(ContextType.TEXT, reply.content, **context.kwargs)
-                    
-                    if new_context:
-                        # 重复调用函数自己： 在_generate_reply函数中调用_generate_reply函数自己
-                        reply = self._generate_reply(new_context)
-
-                        #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
-                        logger.debug("《《《 语音识别后，把识别出的文本替换原来context中的语音，经修改context.type与context.content传出去。这样，当语音提问需要调LINKAI搜索时，再调LINKAI时就无需再做一遍语音识别了。")
-                        # 《《《 这样，当语音提问需要调LINKAI搜索时，再调LINKAI时就无需再做一遍语音识别了。
-                        context.type = ContextType.TEXT
-                        context.content = new_context.content                        
-                        #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
-                    
-                    else:
-                        return
-                    
 
             # 如果是 图片消息，仅保存到本地（待用户下个问题时 可能会问有关图的问题）
             elif context.type == ContextType.IMAGE:  # 图片消息，当前仅做下载保存到本地的逻辑

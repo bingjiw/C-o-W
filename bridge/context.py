@@ -124,8 +124,20 @@ class TextizedContextMsg(Context):
 
         super().__init__(type, content, kwargs)
 
-    
-    def getTextizedText(self):
+
+    @property
+    def TextizedText(self):
+        """
+        获取文本化的内容。
+
+        如果 `_textized_text` 为 `None`，则根据 `ContextType` 将非文本类型的内容转换为文本。
+        如果 `ContextType` 为 `TEXT`，则直接将 `content` 赋值给 `_textized_text`。
+        如果 `_textized_text` 已经有值，则直接返回 `_textized_text`。
+
+        Returns:
+            str: 文本化的内容，如果没有文本化的内容则返回 `None`， 如当还没实现图片或视频的文本化时。
+        """
+        
         if self._textized_text is None:
             #只在TextizedText为None时
             # 才去转化非文本类型的内容为文本，
@@ -140,12 +152,13 @@ class TextizedContextMsg(Context):
             #     aReplyOfImage = Bridge().Recognize_Image_and_return_Text_Description_of_Image(self)
             #     self._textized_text = f"[图片]:{aReplyOfImage.content}"
 
-            else :
-                self._textized_text = f"[此消息类型暂无TextizedText]{self.content}"
-
         #如果 _textized_text 已经有值后，则返回 _textized_text
         return self._textized_text
 
+
+    @TextizedText.setter
+    def TextizedText(self, textized_text):
+        self._textized_text = textized_text
 
 
     def __str__(self):
