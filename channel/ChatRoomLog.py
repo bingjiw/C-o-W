@@ -1,7 +1,7 @@
 import logging
 
 # 创建 总的日志 logger 对象
-total_logger = logging.getLogger("MemorableTalker")
+total_logger = logging.getLogger("MemorableTalker_Total")
 total_logger.setLevel(logging.DEBUG) #要记录所有的日志，包括 DEBUG
 
 #日志格式
@@ -26,7 +26,7 @@ if not handler_exists:
     total_logger.addHandler(total_logger_file_handler)
 
 # 创建 子模块日志(用于记录每个 聊天房间) 记录器
-room_logger = logging.getLogger(f"MemorableTalker.Room")
+room_logger = logging.getLogger(f"MemorableTalker_Room")
 room_logger.setLevel(logging.DEBUG) #要记录所有的日志，包括 DEBUG
 
 # 记录 每个 聊天房间的日志的FileHandler 对象
