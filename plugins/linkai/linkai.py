@@ -95,6 +95,16 @@ class LinkAI(Plugin):
         if (context.type == ContextType.SHARING and self._is_summary_open(context)) or \
                 (context.type == ContextType.TEXT and self._is_summary_open(context) and LinkSummary().check_url(context.content)):
             
+            #如是一个 邀请我进群 的分享SHARING
+            #context.content中的 邀请我进群 的 链接：
+            #Context(type=SHARING, content=https://support.weixin.qq.com/cgi-bin/mmsupport-bin/addchatroombyinvite?ticket=AUYmZw%2BLQ0QRjwtZsy%2BdEg%3D%3D
+                    #域名: support.weixin.qq.com
+                    #路径: /cgi-bin/mmsupport-bin/addchatroombyinvite
+                    #参数: ticket=Afbzq5r%2FzwOtWXMJ0uWOlA%3D%3D
+            if (context.type == ContextType.SHARING) and (context.content.startswith("https://support.weixin.qq.com/cgi-bin/mmsupport-bin/addchatroombyinvite?ticket=")):
+                ReplyErrorMsg_and_BREAK_PASS("收到，谢谢你邀请我进群。", e_context)
+                return
+
             if not LinkSummary().check_url(context.content):
                 ReplyErrorMsg_and_BREAK_PASS("收到我看不懂的：\n❎小程序分享\n❎视频号分享\n\n请发我能看懂的：\n✅微信公众号分享", e_context)
                 return
