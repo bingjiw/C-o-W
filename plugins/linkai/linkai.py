@@ -102,7 +102,7 @@ class LinkAI(Plugin):
                     #路径: /cgi-bin/mmsupport-bin/addchatroombyinvite
                     #参数: ticket=Afbzq5r%2FzwOtWXMJ0uWOlA%3D%3D
             if (context.type == ContextType.SHARING) and (context.content.startswith("https://support.weixin.qq.com/cgi-bin/mmsupport-bin/addchatroombyinvite?ticket=")):
-                ReplyErrorMsg_and_BREAK_PASS("收到，谢谢你邀请我进群。", e_context)
+                ReplyErrorMsg_and_BREAK_PASS("收到进群邀请，会在24小时内接受进群。", e_context)
                 return
 
             if not LinkSummary().check_url(context.content):
