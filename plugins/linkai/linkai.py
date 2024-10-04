@@ -102,7 +102,7 @@ class LinkAI(Plugin):
                     #路径: /cgi-bin/mmsupport-bin/addchatroombyinvite
                     #参数: ticket=Afbzq5r%2FzwOtWXMJ0uWOlA%3D%3D
             if (context.type == ContextType.SHARING) and (context.content.startswith("https://support.weixin.qq.com/cgi-bin/mmsupport-bin/addchatroombyinvite?ticket=")):
-                ReplyErrorMsg_and_BREAK_PASS("收到进群邀请，会在24小时内接受进群。", e_context)
+                ReplyErrorMsg_and_BREAK_PASS("收到进群邀请。\n\n因曾经发生过：进群后，群内有人乱说、乱问不该问的话，而被牵连导致被腾讯封号及限制微信功能的事。\n\n所以必须先付保证金（50元微信红包），以确保群内不会乱问敏感问题。\n\n付完保证金后，请截图发给我，我会在24小时内接受进群。\n\n90天后如果不再需要我在群内，退群后，且没有发生腾讯封号或限制的情况，保证金会退回。\n\n如果群内乱问敏感问题，导致被腾讯封号或限制，退群，结束，且保证金不退。\n\n商议、合作、咨询，请加我微信：bingjiw 或 WhatsApp：+60 11-5357 1876", e_context)
                 return
 
             if not LinkSummary().check_url(context.content):
